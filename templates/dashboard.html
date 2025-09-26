@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Arquivo: {{ file }}</h2>
+
+  {% for category, rows in data.items() %}
+    <section class="category">
+      <h3>{{ category }}</h3>
+      <table>
+        <thead><tr><th>Descrição</th><th>Valor</th><th>Pago</th><th>Data</th><th>Ações</th></tr></thead>
+        <tbody>
+          {% for r in rows %}
+            <tr data-id="{{ r.id }}" data-cat="{{ category }}">
+              <td class="editable" data-field="descricao">{{ r.descricao }}</td>
+              <td class="editable" data-field="valor">{{ r.valor|round(2) }}</td>
+              <td class="editable" data-field="pago">{{ r.pago }}</td>
+              <td class="editable" data-field="data_pagamento">{{ r.data_pagamento or "" }}</td>
+              <td><button class="btn-edit">Editar</button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endfor %}
+
+  <button id="btn-save">Salvar (exportar para Excel)</button>
+{% endblock %}
