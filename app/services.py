@@ -65,21 +65,17 @@ def read_excel_to_structure(filename):
                 strp = str(pago).strip().lower()
                 pago_b = strp in ("sim", "s", "yes", "y", "true", "1")
 
-            # --- INÍCIO: LÓGICA DE FORMATAÇÃO DE DATA ---
             data_str = None
             if pd.notna(data):
-                # Se já for um objeto de data, formata
                 if isinstance(data, (datetime, pd.Timestamp)):
                     data_str = data.strftime('%d/%m/%Y')
                 else:
-                    # Tenta converter o texto para data e formatar
                     try:
                         parsed_date = pd.to_datetime(str(data))
                         data_str = parsed_date.strftime('%d/%m/%Y')
                     except (ValueError, TypeError):
-                        data_str = str(data) # Se falhar, mantém o original
-            # --- FIM: LÓGICA DE FORMATAÇÃO DE DATA ---
-
+                        data_str = str(data)
+            
             id_val = get_col("id", default=generate_id())
             if not id_val or pd.isna(id_val):
                 id_val = generate_id()
@@ -89,7 +85,7 @@ def read_excel_to_structure(filename):
                 nome=str(nome) if not pd.isna(nome) else "",
                 valor=valor_f,
                 pago=bool(pago_b),
-                data=data_str, # Usa a data formatada
+                data=data_str,
                 obs=str(obs) if not pd.isna(obs) else ""
             )
             rows.append(gasto.to_dict())
@@ -106,17 +102,19 @@ def get_structure(filename):
 
 def update_row(payload):
     fn = payload.get("file")
+    if not fn:
+        return False
+
     cat = payload.get("category")
     rid = payload.get("id")
     field = payload.get("field")
     value = payload.get("value")
 
-    if not (fn and cat and rid and field):
+    if not (cat and rid and field):
         return False
     
     struct = get_structure(fn)
 
-    # --- INÍCIO: LÓGICA PARA MOVER DE CATEGORIA ---
     if field == "category":
         new_cat = value
         if cat not in struct or new_cat not in struct:
@@ -135,7 +133,6 @@ def update_row(payload):
             _struct_cache[fn] = struct
             return True
         return False
-    # --- FIM: LÓGICA PARA MOVER DE CATEGORIA ---
 
     if cat not in struct:
         return False
@@ -164,9 +161,7 @@ def add_row(payload):
     fn = payload.get("file")
     cat = payload.get("category") or "Default"
     row = payload.get("row") or {}
-    if not fn:
-        return False
-
+    
     struct = get_structure(fn)
     if cat not in struct:
         struct[cat] = []
@@ -185,9 +180,11 @@ def add_row(payload):
 
 def delete_row(payload):
     fn = payload.get("file")
+    if not fn: return False
+
     cat = payload.get("category")
     rid = payload.get("id")
-    if not (fn and cat and rid):
+    if not (cat and rid):
         return False
 
     struct = get_structure(fn)
@@ -209,14 +206,15 @@ def delete_category(file, category):
         return True
     return False
 
-def save_structure_to_excel(filename):
-    struct = get_structure(filename)
-    if not struct:
-        struct = read_excel_to_structure(filename)
-        if not struct:
-            return False
+def save_structure_to_excel(source_filename, target_filename):
+    struct = get_structure(source_filename)
+    
+    safe_target_filename = safe_filename(target_filename)
+    if not safe_target_filename.lower().endswith('.xlsx'):
+        safe_target_filename += '.xlsx'
 
-    path = DATA_DIR / filename
+    path = DATA_DIR / safe_target_filename
+
     if path.exists():
         bak = DATA_DIR / f"{path.name}.bak.{datetime.now().strftime('%Y%m%d%H%M%S')}"
         shutil.copy(path, bak)
@@ -230,11 +228,10 @@ def save_structure_to_excel(filename):
 
         downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
         os.makedirs(downloads_dir, exist_ok=True)
-        downloads_path = os.path.join(downloads_dir, filename)
+        downloads_path = os.path.join(downloads_dir, safe_target_filename)
         with pd.ExcelWriter(downloads_path, engine="openpyxl") as writer:
             for sheet, rows in struct.items():
                 df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "obs"])
-                # Remove ID para o arquivo de download, para não confundir o usuário
                 if "id" in df.columns:
                     df_download = df.drop(columns=["id"])
                 else:
@@ -246,4 +243,7 @@ def save_structure_to_excel(filename):
         print("Erro salvando excel:", e)
         return False
 
+    if source_filename != target_filename:
+        _struct_cache.pop(source_filename, None)
+        
     return True

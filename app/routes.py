@@ -13,20 +13,23 @@ def index():
 @bp.route("/upload", methods=["POST"])
 def upload():
     uploaded = request.files.get("file")
-    if not uploaded:
-        return "Nenhum arquivo enviado", 400
+    if not uploaded or uploaded.filename == '':
+        return redirect(url_for("main.index"))
     filename = services.save_uploaded_file(uploaded)
     return redirect(url_for("main.dashboard", file=filename))
 
 @bp.route("/dashboard")
 def dashboard():
     file = request.args.get("file")
+    if file == 'None': file = None
     data = services.get_structure(file)
-    if data is None:
-        data = {}
-
+    if data is None: data = {}
     categories = list(data.keys())
     return render_template("dashboard.html", data=data, file=file, categories=categories)
+
+@bp.route("/dashboard/new")
+def new_dashboard():
+    return render_template("dashboard.html", file=None, data={}, categories=[])
 
 @bp.route("/api/update_row", methods=["POST"])
 def api_update_row():
@@ -49,10 +52,13 @@ def api_delete_row():
 @bp.route("/api/save", methods=["POST"])
 def api_save():
     payload = request.json or {}
-    filename = payload.get("file")
-    if not filename:
-        return jsonify({"ok": False, "msg": "arquivo não fornecido"}), 400
-    ok = services.save_structure_to_excel(filename)
+    source_file = payload.get("source_file")
+    target_file = payload.get("target_file")
+
+    if not target_file:
+        return jsonify({"ok": False, "msg": "Nome de arquivo não fornecido"}), 400
+    
+    ok = services.save_structure_to_excel(source_file, target_file)
     return jsonify({"ok": ok})
 
 @bp.route("/api/delete_category", methods=["POST"])
@@ -62,4 +68,3 @@ def api_delete_category():
     category = payload.get("category")
     ok = services.delete_category(file, category)
     return jsonify({"ok": ok})
-

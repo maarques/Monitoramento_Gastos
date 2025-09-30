@@ -11,15 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 newCatInput.style.display = 'none';
             }
         });
+        if (selCat.options.length <= 1 || selCat.value === '_new_') {
+            selCat.value = '_new_';
+            newCatInput.style.display = 'inline-block';
+        }
     }
 
     const btnAdd = document.getElementById('btn-add');
     btnAdd?.addEventListener('click', (e) => {
         e.preventDefault();
-        if (!file) {
-            alert('Nenhum arquivo selecionado');
-            return;
-        }
+        
         let category = selCat?.value || 'Default';
         if (category === '_new_') {
             const name = newCatInput.value.trim();
@@ -43,13 +44,77 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ file, category, row })
         }).then(r => r.json()).then(res => {
             if (res.ok) {
-                // Recarrega a página para mostrar a nova categoria em todos os lugares
-                window.location.reload();
+                if (file) {
+                    window.location.reload();
+                } else {
+                    addRowToDOM(category, res.row);
+                    
+                    document.getElementById('f-nome').value = '';
+                    document.getElementById('f-valor').value = '';
+                    document.getElementById('f-pago').checked = false;
+                    document.getElementById('f-data').value = '';
+                    document.getElementById('f-obs').value = '';
+
+                    const optionExists = selCat.querySelector(`option[value="${category}"]`);
+                    if (!optionExists) {
+                        const newOption = document.createElement('option');
+                        newOption.value = category;
+                        newOption.textContent = category;
+                        const newCatPlaceholder = selCat.querySelector('option[value="_new_"]');
+                        selCat.insertBefore(newOption, newCatPlaceholder);
+                    }
+                    selCat.value = category;
+                    newCatInput.style.display = 'none';
+                }
             } else {
                 alert('Erro ao adicionar');
             }
         });
     });
+
+    function addRowToDOM(category, row) {
+        let catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
+        if (!catContainer) {
+            const title = document.createElement('h4');
+            title.className = 'cat-title';
+            title.innerHTML = `${category} <button class="btn-delete-category" data-category="${category}">Excluir Categoria</button>`;
+            const container = document.createElement('div');
+            container.className = 'cat-container';
+            container.dataset.category = category;
+
+            let gastosList = document.getElementById('gastos-list');
+            if (!gastosList) {
+                const containerSection = document.querySelector('.container');
+                const boxSection = document.createElement('section');
+                boxSection.className = 'box';
+                boxSection.innerHTML = `<h3>Seus Lançamentos</h3><div id="gastos-list" class="gastos-scroll"></div>`;
+                containerSection.appendChild(boxSection);
+                gastosList = document.getElementById('gastos-list');
+            }
+            
+            gastosList.appendChild(title);
+            gastosList.appendChild(container);
+            catContainer = container;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'gasto-item';
+        item.dataset.id = row.id;
+        item.innerHTML = `
+          <div class="gasto-row">
+            <div class="gasto-col nome" data-field="nome">${row.nome}</div>
+            <div class="gasto-col valor" data-field="valor">R$ ${Number(row.valor).toFixed(2)}</div>
+            <div class="gasto-col pago" data-field="pago"><input type="checkbox" class="chk-pago" ${row.pago ? 'checked' : ''}></div>
+            <div class="gasto-col data" data-field="data">${row.data || ''}</div>
+            <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
+            <div class="gasto-col actions">
+              <button class="btn-edit">Editar</button>
+              <button class="btn-delete">Apagar</button>
+            </div>
+          </div>
+        `;
+        catContainer.appendChild(item);
+    }
 
     document.getElementById('gastos-list')?.addEventListener('click', (e) => {
         const btnDel = e.target.closest('.btn-delete');
@@ -58,6 +123,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (btnDelCat) {
             const category = btnDelCat.dataset.category;
+            if (!file) {
+                const catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
+                const catTitle = catContainer.previousElementSibling;
+                if (catContainer) catContainer.remove();
+                if (catTitle) catTitle.remove();
+                const optionToRemove = selCat.querySelector(`option[value="${category}"]`);
+                if(optionToRemove) optionToRemove.remove();
+                return;
+            }
             if (!confirm(`Tem certeza que deseja apagar a categoria "${category}" e todos os seus gastos?`)) return;
 
             fetch('/api/delete_category', {
@@ -77,6 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnDel) {
             const item = btnDel.closest('.gasto-item');
             const id = item.dataset.id;
+            if (!file) {
+                item.remove();
+                return;
+            }
             const category = item.closest('.cat-container').dataset.category;
             if (!confirm('Apagar este gasto?')) return;
             fetch('/api/delete_row', {
@@ -96,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gastos-list')?.addEventListener('change', (e) => {
         if (e.target.classList.contains('chk-pago')) {
             const item = e.target.closest('.gasto-item');
+            if (!file) return;
             const id = item.dataset.id;
             const category = item.closest('.cat-container').dataset.category;
             const checked = e.target.checked;
@@ -116,23 +195,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const gastoRow = item.querySelector('.gasto-row');
 
         if (item.dataset.editing === '1') {
-            const id = item.dataset.id;
-            const category = item.closest('.cat-container').dataset.category;
-            
             const nome = item.querySelector('input[data-field="nome"]').value;
             const valor = item.querySelector('input[data-field="valor"]').value;
-            // Converte a data yyyy-mm-dd do input para dd/mm/yyyy para salvar
-            const dateParts = item.querySelector('input[data-field="data"]').value.split('-');
-            const data = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : '';
-            
+            const dateInput = item.querySelector('input[data-field="data"]').value;
             const obs = item.querySelector('input[data-field="obs"]').value;
+            
+            const dateParts = dateInput.split('-');
+            const displayData = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : '';
+
+            if (!file) {
+                item.querySelector('.nome').textContent = nome;
+                item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
+                item.querySelector('.data').textContent = displayData;
+                item.querySelector('.obs').textContent = obs;
+                item.dataset.editing = '0';
+                const categoryRow = item.querySelector('.gasto-edit-category-row');
+                if (categoryRow) categoryRow.remove();
+                return;
+            }
+
+            const id = item.dataset.id;
+            const category = item.closest('.cat-container').dataset.category;
             const newCategory = item.querySelector('select[data-field="category"]').value;
 
             let updates = [
-                {field: 'nome', value: nome},
-                {field: 'valor', value: valor},
-                {field: 'data', value: data},
-                {field: 'obs', value: obs}
+                {field: 'nome', value: nome}, {field: 'valor', value: valor},
+                {field: 'data', value: displayData}, {field: 'obs', value: obs}
             ];
 
             if (newCategory !== category) {
@@ -151,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         item.querySelector('.nome').textContent = nome;
                         item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
-                        item.querySelector('.data').textContent = data;
+                        item.querySelector('.data').textContent = displayData;
                         item.querySelector('.obs').textContent = obs;
                         item.dataset.editing = '0';
                         item.querySelector('.gasto-edit-category-row').remove();
@@ -175,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataVal = dataCell.textContent.trim();
         const obsVal = obsCell.textContent.trim();
         
-        // Converte a data dd/mm/yyyy do texto para yyyy-mm-dd para o input
         const dateParts = dataVal.split('/');
         const isoDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : '';
 
@@ -183,39 +270,58 @@ document.addEventListener('DOMContentLoaded', () => {
         valorCell.innerHTML = `<input type="number" data-field="valor" value="${valorVal}">`;
         dataCell.innerHTML = `<input type="date" data-field="data" value="${isoDate}">`;
         obsCell.innerHTML = `<input type="text" data-field="obs" value="${obsVal}">`;
-
-        // Cria e adiciona o seletor de categoria
-        const allCategories = Array.from(document.querySelectorAll('.cat-container')).map(c => c.dataset.category);
-        let categorySelectHTML = `<select data-field="category">`;
-        allCategories.forEach(c => {
-            categorySelectHTML += `<option value="${c}" ${c === originalCategory ? 'selected' : ''}>${c}</option>`;
-        });
-        categorySelectHTML += `</select>`;
         
-        const categoryRow = document.createElement('div');
-        categoryRow.className = 'gasto-edit-category-row';
-        categoryRow.innerHTML = `<div class="gasto-col">Mover para:</div><div class="gasto-col">${categorySelectHTML}</div>`;
-        
-        gastoRow.insertAdjacentElement('afterend', categoryRow);
+        if (file) {
+            const allCategories = Array.from(document.querySelectorAll('.cat-container')).map(c => c.dataset.category);
+            let categorySelectHTML = `<select data-field="category">`;
+            allCategories.forEach(c => {
+                categorySelectHTML += `<option value="${c}" ${c === originalCategory ? 'selected' : ''}>${c}</option>`;
+            });
+            categorySelectHTML += `</select>`;
+            
+            const categoryRow = document.createElement('div');
+            categoryRow.className = 'gasto-edit-category-row';
+            categoryRow.innerHTML = `<div class="gasto-col">Mover para:</div><div class="gasto-col">${categorySelectHTML}</div>`;
+            
+            gastoRow.insertAdjacentElement('afterend', categoryRow);
+        }
 
         item.dataset.editing = '1';
     }
 
     document.getElementById('btn-save')?.addEventListener('click', () => {
-        if (!file) {
-            alert('Nenhum arquivo selecionado');
-            return;
+        const source_file = window.APP_FILE || null;
+        let target_file = source_file;
+
+        if (!source_file) {
+            let newFilename = prompt("Por favor, digite o nome para a nova planilha:", "minhas_financas.xlsx");
+            
+            if (!newFilename || newFilename.trim() === '') {
+                alert("O salvamento foi cancelado. É preciso fornecer um nome para o arquivo.");
+                return;
+            }
+
+            if (!newFilename.toLowerCase().endsWith('.xlsx')) {
+                newFilename += '.xlsx';
+            }
+            target_file = newFilename;
         }
+
         const msg = document.getElementById('save-msg');
         msg.textContent = 'Salvando...';
+
         fetch('/api/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file })
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ source_file, target_file })
         }).then(r => r.json()).then(res => {
             if (res.ok) {
-                msg.textContent = 'Salvo com sucesso.';
-                setTimeout(() => msg.textContent = '', 2500);
+                if (!source_file) {
+                    window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
+                } else {
+                    msg.textContent = 'Salvo com sucesso.';
+                    setTimeout(()=> msg.textContent = '', 2500);
+                }
             } else {
                 msg.textContent = 'Erro ao salvar.';
             }
