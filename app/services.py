@@ -65,10 +65,23 @@ def read_excel_to_structure(filename):
                 strp = str(pago).strip().lower()
                 pago_b = strp in ("sim", "s", "yes", "y", "true", "1")
 
-            id_val = None
-            if "id" in col_map:
-                id_val = r[col_map["id"]]
-            if not id_val or (pd.isna(id_val)):
+            # --- INÍCIO: LÓGICA DE FORMATAÇÃO DE DATA ---
+            data_str = None
+            if pd.notna(data):
+                # Se já for um objeto de data, formata
+                if isinstance(data, (datetime, pd.Timestamp)):
+                    data_str = data.strftime('%d/%m/%Y')
+                else:
+                    # Tenta converter o texto para data e formatar
+                    try:
+                        parsed_date = pd.to_datetime(str(data))
+                        data_str = parsed_date.strftime('%d/%m/%Y')
+                    except (ValueError, TypeError):
+                        data_str = str(data) # Se falhar, mantém o original
+            # --- FIM: LÓGICA DE FORMATAÇÃO DE DATA ---
+
+            id_val = get_col("id", default=generate_id())
+            if not id_val or pd.isna(id_val):
                 id_val = generate_id()
 
             gasto = Expense(
@@ -76,8 +89,8 @@ def read_excel_to_structure(filename):
                 nome=str(nome) if not pd.isna(nome) else "",
                 valor=valor_f,
                 pago=bool(pago_b),
-                data=str(data) if not pd.isna(data) else None,
-                obs=str(obs) if not pd.isna(obs) else None
+                data=data_str, # Usa a data formatada
+                obs=str(obs) if not pd.isna(obs) else ""
             )
             rows.append(gasto.to_dict())
         structure[sheet_name] = rows
@@ -100,8 +113,30 @@ def update_row(payload):
 
     if not (fn and cat and rid and field):
         return False
-
+    
     struct = get_structure(fn)
+
+    # --- INÍCIO: LÓGICA PARA MOVER DE CATEGORIA ---
+    if field == "category":
+        new_cat = value
+        if cat not in struct or new_cat not in struct:
+            return False
+        
+        row_to_move = None
+        original_index = -1
+        for i, row in enumerate(struct[cat]):
+            if str(row.get("id")) == str(rid):
+                original_index = i
+                break
+        
+        if original_index != -1:
+            row_to_move = struct[cat].pop(original_index)
+            struct[new_cat].append(row_to_move)
+            _struct_cache[fn] = struct
+            return True
+        return False
+    # --- FIM: LÓGICA PARA MOVER DE CATEGORIA ---
+
     if cat not in struct:
         return False
 
@@ -114,10 +149,7 @@ def update_row(payload):
                 except Exception:
                     return False
             elif field == "pago":
-                if isinstance(value, bool):
-                    row["pago"] = value
-                else:
-                    row["pago"] = str(value).strip().lower() in ("true", "1", "sim", "s", "yes")
+                row["pago"] = bool(value)
             else:
                 row[field] = value
             struct[cat][i] = row
@@ -192,12 +224,7 @@ def save_structure_to_excel(filename):
     try:
         with pd.ExcelWriter(path, engine="openpyxl") as writer:
             for sheet, rows in struct.items():
-                if not rows:
-                    df = pd.DataFrame(columns=["nome", "valor", "pago", "data", "obs"])
-                else:
-                    df = pd.DataFrame(rows)
-                    if "id" in df.columns:
-                        df = df.drop(columns=["id"])
+                df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "obs"])
                 sheet_name = str(sheet)[:31]
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
 
@@ -206,14 +233,14 @@ def save_structure_to_excel(filename):
         downloads_path = os.path.join(downloads_dir, filename)
         with pd.ExcelWriter(downloads_path, engine="openpyxl") as writer:
             for sheet, rows in struct.items():
-                if not rows:
-                    df = pd.DataFrame(columns=["nome", "valor", "pago", "data", "obs"])
+                df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "obs"])
+                # Remove ID para o arquivo de download, para não confundir o usuário
+                if "id" in df.columns:
+                    df_download = df.drop(columns=["id"])
                 else:
-                    df = pd.DataFrame(rows)
-                    if "id" in df.columns:
-                        df = df.drop(columns=["id"])
+                    df_download = df
                 sheet_name = str(sheet)[:31]
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
+                df_download.to_excel(writer, sheet_name=sheet_name, index=False)
 
     except Exception as e:
         print("Erro salvando excel:", e)

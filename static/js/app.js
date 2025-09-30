@@ -39,83 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         fetch('/api/add_row', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file,
-                category,
-                row
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file, category, row })
         }).then(r => r.json()).then(res => {
             if (res.ok) {
-                addRowToDOM(category, res.row);
-
-                // --- INÍCIO DA NOVA LÓGICA ---
-                // Verifica se a categoria já existe no seletor
-                const optionExists = selCat.querySelector(`option[value="${category}"]`);
-
-                // Se não existir, cria e adiciona a nova opção
-                if (!optionExists) {
-                    const newOption = document.createElement('option');
-                    newOption.value = category;
-                    newOption.textContent = category;
-
-                    // Insere a nova opção antes do item "+ nova categoria..."
-                    const newCatPlaceholder = selCat.querySelector('option[value="_new_"]');
-                    selCat.insertBefore(newOption, newCatPlaceholder);
-                }
-
-                // Seleciona a categoria atual, limpa e esconde o campo de texto
-                selCat.value = category;
-                newCatInput.value = '';
-                newCatInput.style.display = 'none';
-                // --- FIM DA NOVA LÓGICA ---
-
-                document.getElementById('f-nome').value = '';
-                document.getElementById('f-valor').value = '';
-                document.getElementById('f-pago').checked = false;
-                document.getElementById('f-data').value = '';
-                document.getElementById('f-obs').value = '';
+                // Recarrega a página para mostrar a nova categoria em todos os lugares
+                window.location.reload();
             } else {
                 alert('Erro ao adicionar');
             }
         });
     });
-
-    function addRowToDOM(category, row) {
-        let catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
-        if (!catContainer) {
-            const title = document.createElement('h4');
-            title.className = 'cat-title';
-            title.innerHTML = `${category} <button class="btn-delete-category" data-category="${category}">Excluir</button>`;
-            const container = document.createElement('div');
-            container.className = 'cat-container';
-            container.dataset.category = category;
-            const gastosList = document.getElementById('gastos-list');
-            gastosList.appendChild(title);
-            gastosList.appendChild(container);
-            catContainer = container;
-        }
-
-        const item = document.createElement('div');
-        item.className = 'gasto-item';
-        item.dataset.id = row.id;
-        item.innerHTML = `
-          <div class="gasto-row">
-            <div class="gasto-col nome" data-field="nome">${row.nome}</div>
-            <div class="gasto-col valor" data-field="valor">R$ ${Number(row.valor).toFixed(2)}</div>
-            <div class="gasto-col pago" data-field="pago"><input type="checkbox" class="chk-pago" ${row.pago ? 'checked' : ''}></div>
-            <div class="gasto-col data" data-field="data">${row.data || ''}</div>
-            <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
-            <div class="gasto-col actions">
-              <button class="btn-edit">Editar</button>
-              <button class="btn-delete">Apagar</button>
-            </div>
-          </div>
-        `;
-        catContainer.appendChild(item);
-    }
 
     document.getElementById('gastos-list')?.addEventListener('click', (e) => {
         const btnDel = e.target.closest('.btn-delete');
@@ -128,31 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             fetch('/api/delete_category', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file,
-                    category
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file, category })
             }).then(r => r.json()).then(res => {
                 if (res.ok) {
-                    const catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
-                    const catTitle = catContainer.previousElementSibling; // The H4 tag
-                    if (catContainer) catContainer.remove();
-                    if (catTitle) catTitle.remove();
-
-                    // Adicionado: remove a categoria do select também
-                    const optionToRemove = selCat.querySelector(`option[value="${category}"]`);
-                    if(optionToRemove) {
-                        optionToRemove.remove();
-                    }
-
+                    window.location.reload();
                 } else {
                     alert('Erro ao apagar a categoria');
                 }
             });
-            return; // Stop further execution
+            return;
         }
 
         if (btnDel) {
@@ -162,14 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirm('Apagar este gasto?')) return;
             fetch('/api/delete_row', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file,
-                    category,
-                    id
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file, category, id })
             }).then(r => r.json()).then(res => {
                 if (res.ok) item.remove();
                 else alert('Erro ao apagar');
@@ -188,16 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const checked = e.target.checked;
             fetch('/api/update_row', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file,
-                    category,
-                    id,
-                    field: 'pago',
-                    value: checked
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file, category, id, field: 'pago', value: checked })
             }).then(r => r.json()).then(res => {
                 if (!res.ok) {
                     alert('Erro ao atualizar pago');
@@ -208,51 +113,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function toggleEdit(item) {
-        const cols = item.querySelectorAll('.gasto-col');
+        const gastoRow = item.querySelector('.gasto-row');
+
         if (item.dataset.editing === '1') {
             const id = item.dataset.id;
             const category = item.closest('.cat-container').dataset.category;
+            
             const nome = item.querySelector('input[data-field="nome"]').value;
             const valor = item.querySelector('input[data-field="valor"]').value;
-            const data = item.querySelector('input[data-field="data"]').value;
+            // Converte a data yyyy-mm-dd do input para dd/mm/yyyy para salvar
+            const dateParts = item.querySelector('input[data-field="data"]').value.split('-');
+            const data = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : '';
+            
             const obs = item.querySelector('input[data-field="obs"]').value;
-            const updates = [{
-                field: 'nome',
-                value: nome
-            }, {
-                field: 'valor',
-                value: valor
-            }, {
-                field: 'data',
-                value: data
-            }, {
-                field: 'obs',
-                value: obs
-            }];
+            const newCategory = item.querySelector('select[data-field="category"]').value;
+
+            let updates = [
+                {field: 'nome', value: nome},
+                {field: 'valor', value: valor},
+                {field: 'data', value: data},
+                {field: 'obs', value: obs}
+            ];
+
+            if (newCategory !== category) {
+                updates.push({field: 'category', value: newCategory});
+            }
+
             Promise.all(updates.map(u => fetch('/api/update_row', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file,
-                    category,
-                    id,
-                    field: u.field,
-                    value: u.value
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file, category, id, field: u.field, value: u.value })
             }).then(r => r.json()))).then(results => {
                 const allOk = results.every(r => r.ok);
-                if (!allOk) alert('Alguma atualização falhou');
-                // restore display
-                item.querySelector('.nome').textContent = nome;
-                item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
-                item.querySelector('.data').textContent = data;
-                item.querySelector('.obs').textContent = obs;
-                item.dataset.editing = '0';
+                if (allOk) {
+                    if (newCategory !== category) {
+                        window.location.reload();
+                    } else {
+                        item.querySelector('.nome').textContent = nome;
+                        item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
+                        item.querySelector('.data').textContent = data;
+                        item.querySelector('.obs').textContent = obs;
+                        item.dataset.editing = '0';
+                        item.querySelector('.gasto-edit-category-row').remove();
+                    }
+                } else {
+                    alert('Alguma atualização falhou');
+                }
             });
             return;
         }
+
+        const originalCategory = item.closest('.cat-container').dataset.category;
 
         const nomeCell = item.querySelector('.nome');
         const valorCell = item.querySelector('.valor');
@@ -263,11 +174,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const valorVal = valorCell.textContent.replace(/[R$\s]/g, '').replace(',', '.').trim();
         const dataVal = dataCell.textContent.trim();
         const obsVal = obsCell.textContent.trim();
+        
+        // Converte a data dd/mm/yyyy do texto para yyyy-mm-dd para o input
+        const dateParts = dataVal.split('/');
+        const isoDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : '';
 
-        nomeCell.innerHTML = `<input data-field="nome" value="${nomeVal}">`;
-        valorCell.innerHTML = `<input data-field="valor" value="${valorVal}">`;
-        dataCell.innerHTML = `<input data-field="data" value="${dataVal}">`;
-        obsCell.innerHTML = `<input data-field="obs" value="${obsVal}">`;
+        nomeCell.innerHTML = `<input type="text" data-field="nome" value="${nomeVal}">`;
+        valorCell.innerHTML = `<input type="number" data-field="valor" value="${valorVal}">`;
+        dataCell.innerHTML = `<input type="date" data-field="data" value="${isoDate}">`;
+        obsCell.innerHTML = `<input type="text" data-field="obs" value="${obsVal}">`;
+
+        // Cria e adiciona o seletor de categoria
+        const allCategories = Array.from(document.querySelectorAll('.cat-container')).map(c => c.dataset.category);
+        let categorySelectHTML = `<select data-field="category">`;
+        allCategories.forEach(c => {
+            categorySelectHTML += `<option value="${c}" ${c === originalCategory ? 'selected' : ''}>${c}</option>`;
+        });
+        categorySelectHTML += `</select>`;
+        
+        const categoryRow = document.createElement('div');
+        categoryRow.className = 'gasto-edit-category-row';
+        categoryRow.innerHTML = `<div class="gasto-col">Mover para:</div><div class="gasto-col">${categorySelectHTML}</div>`;
+        
+        gastoRow.insertAdjacentElement('afterend', categoryRow);
 
         item.dataset.editing = '1';
     }
@@ -281,12 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
         msg.textContent = 'Salvando...';
         fetch('/api/save', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file })
         }).then(r => r.json()).then(res => {
             if (res.ok) {
                 msg.textContent = 'Salvo com sucesso.';

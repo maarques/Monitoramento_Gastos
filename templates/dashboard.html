@@ -2,47 +2,68 @@
 {% block title %}Dashboard - {{ file or '' }}{% endblock %}
 
 {% block content %}
-  <section class="box">
-    <h2>Arquivo: {{ file or "(nenhum arquivo)" }}</h2>
 
-    <div class="row">
-      <div class="col">
-        <label>Categoria:
+  <div class="file-title-container">
+    <h3>Arquivo Aberto: <span>{{ file or "(nenhum)" }}</span></h3>
+  </div>
+
+  <section class="box">
+    <h2>Adicionar novo lançamento</h2>
+
+    <div class="add-form">
+      <div class="form-group category-group">
+        <label for="select-category">Categoria</label>
+        <div class="category-selector">
           <select id="select-category">
             {% for c in categories %}
               <option value="{{ c }}">{{ c }}</option>
             {% endfor %}
             <option value="_new_">+ nova categoria...</option>
           </select>
-        </label>
-        <input type="text" id="new-category-name" placeholder="Nome nova categoria" style="display:none;">
+          <input type="text" id="new-category-name" placeholder="Nome da nova categoria" style="display:none;">
+        </div>
       </div>
-    </div>
 
-    <div class="row form-inline">
-      <input id="f-nome" placeholder="Descrição (ex: Conta de luz)">
-      <input id="f-valor" placeholder="Valor (ex: 120.50)">
-      <label><input id="f-pago" type="checkbox"> Pago</label>
-      
-            <input id="f-data" type="date"> 
-      
-      <input id="f-obs" placeholder="Observações">
-      <button id="btn-add">Adicionar gasto</button>
-    </div>
+      <div class="form-group description">
+        <label for="f-nome">Descrição</label>
+        <input id="f-nome" type="text" placeholder="Ex: Conta de luz">
+      </div>
 
-    <div class="row">
-      <button id="btn-save">Salvar planilha</button>
-      <span id="save-msg"></span>
+      <div class="form-group value">
+        <label for="f-valor">Valor (R$)</label>
+        <input id="f-valor" type="number" placeholder="Ex: 120.50">
+      </div>
+
+      <div class="form-group date">
+        <label for="f-data">Data</label>
+        <input id="f-data" type="date">
+      </div>
+
+      <div class="form-group obs">
+        <label for="f-obs">Observações</label>
+        <input id="f-obs" type="text" placeholder="Algum detalhe extra">
+      </div>
+
+      <div class="form-group paid">
+        <label for="f-pago">
+          <input id="f-pago" type="checkbox">
+          Pago
+        </label>
+      </div>
+
+      <div class="form-group action-group">
+        <button id="btn-add">Adicionar Lançamento</button>
+      </div>
     </div>
   </section>
 
   <section class="box">
-    <h3>Fluxo </h3>
+    <h3>Seus Lançamentos</h3>
     <div id="gastos-list" class="gastos-scroll">
       {% if data %}
         {% for category, rows in data.items() %}
-          <h4 class="cat-title">{{ category }} 
-            <button class="btn-delete-category" data-category="{{ category }}">Excluir</button>
+          <h4 class="cat-title">{{ category }}
+            <button class="btn-delete-category" data-category="{{ category }}">Excluir Categoria</button>
           </h4>
           <div class="cat-container" data-category="{{ category }}">
             {% for r in rows %}
@@ -63,8 +84,14 @@
           </div>
         {% endfor %}
       {% else %}
-        <p>Nenhum gasto carregado.</p>
+        <p>Nenhum lançamento carregado.</p>
       {% endif %}
     </div>
   </section>
+
+  <section class="box save-section">
+    <button id="btn-save">Salvar Alterações na Planilha</button>
+    <span id="save-msg"></span>
+  </section>
+
 {% endblock %}

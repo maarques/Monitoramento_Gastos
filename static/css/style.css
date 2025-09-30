@@ -1,15 +1,258 @@
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; background:#fafafa; color:#222;}
-.topbar { background:#fff; border-bottom:1px solid #eee; padding:16px;}
-.container { padding:20px; max-width:1100px; margin:0 auto;}
-.box { background:#fff; padding:16px; margin-bottom:16px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
-.row { margin:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.form-inline input { padding:6px; border:1px solid #ddd; border-radius:4px; }
-button { padding:6px 10px; border-radius:4px; border:1px solid #bbb; background:#f5f5f5; cursor:pointer; }
-.gastos-scroll { max-height:420px; overflow:auto; padding:8px; border:1px dashed #eee; }
-.gasto-item { border:1px solid #efefef; padding:6px; margin-bottom:6px; border-radius:4px; background:#fff;}
-.gasto-row { display:flex; gap:8px; align-items:center; }
-.gasto-col { padding:4px 6px; min-width:80px; }
-.gasto-col.nome { min-width:220px; }
-.gasto-col.valor { width:100px; text-align:right; font-weight:600; }
-.gasto-col.actions { margin-left:auto; display:flex; gap:6px; }
-.cat-title { margin-top:12px; margin-bottom:6px; font-size:1.05rem; color:#333; }
+/* ========================================= */
+/* GERAL E LAYOUT BÁSICO                     */
+/* ========================================= */
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  background-color: #f4f7f6;
+  color: #333;
+  font-size: 16px;
+}
+main.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+h1, h2, h3, h4 {
+  color: #2f4f4f;
+}
+.file-title-container {
+  background-color: #e8f3ee;
+  padding: 15px 25px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid #d4e3dc;
+}
+.file-title-container h3 {
+  margin: 0;
+  font-size: 1.2em;
+  color: #005A3A;
+}
+.file-title-container h3 span {
+  font-weight: 500;
+  color: #333;
+}
+/* ========================================= */
+/* CABEÇALHO (TOPBAR)                        */
+/* ========================================= */
+.topbar {
+  background-color: #005A3A;
+  color: white;
+  padding: 15px 30px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.topbar h1 {
+  margin: 0;
+  color: white;
+  font-size: 1.8em;
+}
+/* ========================================= */
+/* SEÇÕES E CAIXAS (BOX)                     */
+/* ========================================= */
+.box {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border: 1px solid #e0e0e0;
+}
+.box form {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.box form button {
+    background-color: #28a745;
+    flex-shrink: 0;
+}
+/* ========================================= */
+/* FORMULÁRIO DE ADIÇÃO                      */
+/* ========================================= */
+.add-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 25px;
+  align-items: end;
+}
+.add-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+.add-form .category-group {
+  grid-column: 1 / 3;
+}
+.add-form .action-group {
+  grid-column: 2 / 3;
+  justify-self: end;
+}
+.add-form .paid label {
+  flex-direction: row;
+  align-items: center;
+}
+.add-form .form-group label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+  font-size: 1em;
+}
+.add-form .category-selector {
+  display: flex;
+  gap: 15px;
+}
+input[type="text"], input[type="number"], input[type="date"], select {
+  font-size: 1.1em;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+.category-selector > select, .category-selector > input {
+  flex: 1;
+}
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+/* ========================================= */
+/* BOTÕES PRINCIPAIS                         */
+/* ========================================= */
+button {
+  font-size: 1.1em;
+  font-weight: bold;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+button:hover { opacity: 0.9; }
+button:active { transform: scale(0.98); }
+#btn-add { background-color: #28a745; }
+#btn-save {
+  width: 100%;
+  background-color: #005A3A;
+}
+.save-section { text-align: center; }
+#save-msg {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #005A3A;
+}
+/* ========================================= */
+/* LISTA DE LANÇAMENTOS                       */
+/* ========================================= */
+.cat-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #e8f3ee;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-top: 25px;
+  font-size: 1.4em;
+}
+.gasto-item {
+  border-bottom: 1px solid #eee;
+  padding: 15px 10px;
+}
+.gasto-item:last-child { border-bottom: none; }
+.gasto-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.gasto-col { flex-shrink: 0; }
+.gasto-col.nome { flex: 3; min-width: 150px; font-weight: bold; }
+.gasto-col.valor { flex: 1.5; min-width: 100px; }
+.gasto-col.data { flex: 1.5; min-width: 120px; }
+.gasto-col.obs { flex: 4; min-width: 150px; color: #666; }
+.gasto-col.pago { flex: 0.5; min-width: 60px; text-align: center;}
+.gasto-col.actions { flex: 1.5; min-width: 180px; text-align: right;}
+.gasto-row input[type="text"],
+.gasto-row input[type="number"],
+.gasto-row input[type="date"] {
+    width: 100%;
+    padding: 6px;
+    font-size: 1em;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+}
+.gasto-edit-category-row {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.gasto-edit-category-row .gasto-col:first-child {
+    font-weight: bold;
+    flex: 0 0 auto;
+}
+.gasto-edit-category-row .gasto-col:last-child {
+    flex: 1 1 auto;
+}
+.gasto-edit-category-row select {
+    width: 100%;
+    font-size: 1em;
+    padding: 6px;
+}
+/* ========================================= */
+/* BOTÕES DE AÇÃO PEQUENOS                   */
+/* ========================================= */
+.btn-edit, .btn-delete {
+  font-size: 0.9em;
+  padding: 6px 14px;
+  font-weight: 500;
+}
+
+/* --- ALTERAÇÃO FEITA AQUI --- */
+.btn-delete-category {
+  font-size: 0.8em; /* Fonte menor */
+  padding: 5px 10px; /* Menos espaçamento interno */
+  font-weight: 500;
+  background-color: #c82333;
+}
+/* --- FIM DA ALTERAÇÃO --- */
+
+.btn-edit { background-color: #007bff; margin-right: 8px; }
+.btn-delete { background-color: #dc3545; }
+
+/* ========================================= */
+/* AJUSTES PARA TELAS MENORES (CELULAR)      */
+/* ========================================= */
+@media (max-width: 768px) {
+  .add-form {
+    grid-template-columns: 1fr;
+  }
+  .add-form .form-group,
+  .add-form .action-group {
+      grid-column: 1 / -1 !important;
+  }
+  .add-form .action-group {
+      justify-self: stretch;
+  }
+  #btn-add {
+      width: 100%;
+  }
+  .gasto-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .gasto-col.actions {
+    text-align: left;
+    margin-top: 10px;
+  }
+  .topbar h1 { font-size: 1.5em; }
+}
