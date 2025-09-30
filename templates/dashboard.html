@@ -5,9 +5,9 @@
   <section class="box">
     <h2>Arquivo: {{ file or "(nenhum arquivo)" }}</h2>
 
-   <div class="row">
+    <div class="row">
       <div class="col">
-      <label>Categoria:
+        <label>Categoria:
           <select id="select-category">
             {% for c in categories %}
               <option value="{{ c }}">{{ c }}</option>
@@ -23,7 +23,9 @@
       <input id="f-nome" placeholder="Descrição (ex: Conta de luz)">
       <input id="f-valor" placeholder="Valor (ex: 120.50)">
       <label><input id="f-pago" type="checkbox"> Pago</label>
-      <input id="f-data" placeholder="Data (YYYY-MM-DD)">
+      
+            <input id="f-data" type="date"> 
+      
       <input id="f-obs" placeholder="Observações">
       <button id="btn-add">Adicionar gasto</button>
     </div>
@@ -35,7 +37,7 @@
   </section>
 
   <section class="box">
-    <h3>Gastos (rolável)</h3>
+    <h3>Fluxo </h3>
     <div id="gastos-list" class="gastos-scroll">
       {% if data %}
         {% for category, rows in data.items() %}
