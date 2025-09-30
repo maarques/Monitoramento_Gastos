@@ -5,9 +5,9 @@
   <section class="box">
     <h2>Arquivo: {{ file or "(nenhum arquivo)" }}</h2>
 
-    <div class="row">
+   <div class="row">
       <div class="col">
-        <label>Categoria:
+      <label>Categoria:
           <select id="select-category">
             {% for c in categories %}
               <option value="{{ c }}">{{ c }}</option>
@@ -39,7 +39,9 @@
     <div id="gastos-list" class="gastos-scroll">
       {% if data %}
         {% for category, rows in data.items() %}
-          <h4 class="cat-title">{{ category }}</h4>
+          <h4 class="cat-title">{{ category }} 
+            <button class="btn-delete-category" data-category="{{ category }}">Excluir</button>
+          </h4>
           <div class="cat-container" data-category="{{ category }}">
             {% for r in rows %}
               <div class="gasto-item" data-id="{{ r.id }}">
