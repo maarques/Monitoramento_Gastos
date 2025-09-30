@@ -1,26 +1,66 @@
 {% extends "base.html" %}
+{% block title %}Dashboard - {{ file or '' }}{% endblock %}
+
 {% block content %}
-  <h2>Arquivo: {{ file }}</h2>
+  <section class="box">
+    <h2>Arquivo: {{ file or "(nenhum arquivo)" }}</h2>
 
-  {% for category, rows in data.items() %}
-    <section class="category">
-      <h3>{{ category }}</h3>
-      <table>
-        <thead><tr><th>Descrição</th><th>Valor</th><th>Pago</th><th>Data</th><th>Ações</th></tr></thead>
-        <tbody>
-          {% for r in rows %}
-            <tr data-id="{{ r.id }}" data-cat="{{ category }}">
-              <td class="editable" data-field="descricao">{{ r.descricao }}</td>
-              <td class="editable" data-field="valor">{{ r.valor|round(2) }}</td>
-              <td class="editable" data-field="pago">{{ r.pago }}</td>
-              <td class="editable" data-field="data_pagamento">{{ r.data_pagamento or "" }}</td>
-              <td><button class="btn-edit">Editar</button></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-  {% endfor %}
+    <div class="row">
+      <div class="col">
+        <label>Categoria:
+          <select id="select-category">
+            {% for c in categories %}
+              <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+            <option value="_new_">+ nova categoria...</option>
+          </select>
+        </label>
+        <input type="text" id="new-category-name" placeholder="Nome nova categoria" style="display:none;">
+      </div>
+    </div>
 
-  <button id="btn-save">Salvar (exportar para Excel)</button>
+    <div class="row form-inline">
+      <input id="f-nome" placeholder="Descrição (ex: Conta de luz)">
+      <input id="f-valor" placeholder="Valor (ex: 120.50)">
+      <label><input id="f-pago" type="checkbox"> Pago</label>
+      <input id="f-data" placeholder="Data (YYYY-MM-DD)">
+      <input id="f-obs" placeholder="Observações">
+      <button id="btn-add">Adicionar gasto</button>
+    </div>
+
+    <div class="row">
+      <button id="btn-save">Salvar planilha</button>
+      <span id="save-msg"></span>
+    </div>
+  </section>
+
+  <section class="box">
+    <h3>Gastos (rolável)</h3>
+    <div id="gastos-list" class="gastos-scroll">
+      {% if data %}
+        {% for category, rows in data.items() %}
+          <h4 class="cat-title">{{ category }}</h4>
+          <div class="cat-container" data-category="{{ category }}">
+            {% for r in rows %}
+              <div class="gasto-item" data-id="{{ r.id }}">
+                <div class="gasto-row">
+                  <div class="gasto-col nome" data-field="nome">{{ r.nome }}</div>
+                  <div class="gasto-col valor" data-field="valor">R$ {{ "%.2f"|format(r.valor) }}</div>
+                  <div class="gasto-col pago" data-field="pago"><input type="checkbox" class="chk-pago" {% if r.pago %}checked{% endif %}></div>
+                  <div class="gasto-col data" data-field="data">{{ r.data or '' }}</div>
+                  <div class="gasto-col obs" data-field="obs">{{ r.obs or '' }}</div>
+                  <div class="gasto-col actions">
+                    <button class="btn-edit">Editar</button>
+                    <button class="btn-delete">Apagar</button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>Nenhum gasto carregado.</p>
+      {% endif %}
+    </div>
+  </section>
 {% endblock %}

@@ -1,18 +1,21 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% block title %}Gastos{% endblock %}</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Monitor de Gastos{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <header>
+  <header class="topbar">
     <h1>Monitor de Gastos</h1>
   </header>
-  <main>
+  <main class="container">
     {% block content %}{% endblock %}
   </main>
+  <script>
+    window.APP_FILE = "{{ file or '' }}";
+  </script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

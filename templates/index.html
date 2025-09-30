@@ -1,16 +1,24 @@
 {% extends "base.html" %}
+{% block title %}Home - Monitor de Gastos{% endblock %}
 {% block content %}
-  <form action="{{ url_for('main.upload') }}" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".xlsx">
-    <button type="submit">Fazer upload</button>
-  </form>
+  <section class="box">
+    <h2>Subir planilha</h2>
+    <form action="{{ url_for('main.upload') }}" method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".xlsx" required>
+      <button type="submit">Fazer upload</button>
+    </form>
+  </section>
 
-  <h2>Planilhas locais</h2>
-  <ul>
-    {% for f in files %}
-      <li><a href="{{ url_for('main.dashboard') }}?file={{ f }}">{{ f }}</a></li>
-    {% else %}
-      <li>Nenhuma planilha encontrada</li>
-    {% endfor %}
-  </ul>
+  <section class="box">
+    <h2>Planilhas locais</h2>
+    <ul>
+      {% if files %}
+        {% for f in files %}
+          <li><a href="{{ url_for('main.dashboard') }}?file={{ f }}">{{ f }}</a></li>
+        {% endfor %}
+      {% else %}
+        <li>Nenhuma planilha encontrada</li>
+      {% endif %}
+    </ul>
+  </section>
 {% endblock %}
