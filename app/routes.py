@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, jsonify
 from . import services
 
 bp = Blueprint("main", __name__)
@@ -9,6 +9,12 @@ def index():
 
 @bp.route("/upload", methods=["POST"])
 def upload():
+    uploaded_file = request.files.get("file")
+    if not uploaded_file:
+        "Nenhum Arquivo Encontrado", 400
+
+    services.save_uploaded_file(uploaded_file)  
+    return render_template("dashboard.html", data={}, file = uploaded_file)  
     pass
 
 @bp.route("/dashboard")

@@ -1,6 +1,8 @@
 import pandas as pd
 from pathlib import Path
 from .utils import generate_id
+import os
+from werkzeug.utils import secure_filename
 
 DATA_DIR = Path("data")
 
@@ -15,3 +17,9 @@ def update_row(payload):
 
 def save_structure_to_excel(filename):
     pass
+
+def save_uploaded_file(file_storage):
+    filename = secure_filename(file_storage.filename)
+    filepath = os.path.join("data", filename)
+    file_storage.save(filepath)
+    return filepath
