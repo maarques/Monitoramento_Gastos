@@ -96,18 +96,20 @@ O projeto é organizado da seguinte forma para separar as responsabilidades:
 
 Monitoramento_Gastos/
 ├── app/                  # Contém o núcleo da aplicação Flask
+│   ├── static/           # Arquivos estáticos (CSS, JS)
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   └── js/
+│   │       └── app.js
+│   ├── templates/        # Arquivos HTML com Jinja2
+│   │   ├── base.html
+│   │   ├── dashboard.html
+│   │   └── index.html
 │   ├── init.py       # Inicializa a aplicação
+│   ├── models.py         # Define a estrutura de dados de um "gasto"
 │   ├── routes.py         # Define todas as rotas e a API
 │   ├── services.py       # Contém a lógica de negócio (manipulação de planilhas)
-│   ├── models.py         # Define a estrutura de dados de um "gasto"
-│   ├── utils.py          # Funções utilitárias
-│   ├── static/           # Arquivos estáticos (CSS, JS)
-│   │   ├── css/style.css
-│   │   └── js/app.js
-│   └── templates/        # Arquivos HTML com Jinja2
-│       ├── base.html
-│       ├── dashboard.html
-│       └── index.html
+│   └── utils.py          # Funções utilitárias
 ├── data/                 # Pasta onde as planilhas são salvas (ignorada pelo Git)
 ├── requirements.txt      # Lista de dependências Python
 └── run.py                # Ponto de entrada para executar a aplicação
