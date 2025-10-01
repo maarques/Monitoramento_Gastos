@@ -93,7 +93,7 @@ Siga os passos abaixo para rodar a aplicação em seu ambiente local.
 ### 📁 Estrutura do Projeto
 
 O projeto é organizado da seguinte forma para separar as responsabilidades:
-
+```
 Monitoramento_Gastos/
 ├── app/                  # Contém o núcleo da aplicação Flask
 │   ├── static/           # Arquivos estáticos (CSS, JS)
@@ -113,6 +113,6 @@ Monitoramento_Gastos/
 ├── data/                 # Pasta onde as planilhas são salvas (ignorada pelo Git)
 ├── requirements.txt      # Lista de dependências Python
 └── run.py                # Ponto de entrada para executar a aplicação
-
+```
 ### ❤️
 Feito por **[Marques](https://github.com/maarques)**.
