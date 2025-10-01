@@ -11,7 +11,7 @@ Uma ferramenta web simples e intuitiva para visualizar e gerenciar seus gastos a
 ### ✨ Visualização do Projeto
 
 <p align="center">
-  <img src="https://i.imgur.com/G5g2mB1.png" alt="Demonstração do Dashboard" width="800"/>
+  <img width="1363" height="636" alt="Image" src="https://github.com/user-attachments/assets/d5579c0d-4173-4c58-8815-3c25d447b741" />
 </p>
 
 ---
