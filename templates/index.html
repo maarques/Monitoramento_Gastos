@@ -2,13 +2,14 @@
 {% block title %}Home - Painel Financeiro{% endblock %}
 {% block content %}
   <section class="box">
-    <h2>Nova Planilha</h2>
+    <h2>Começar do zero</h2>
     <a href="{{ url_for('main.new_dashboard') }}" class="button-action">Criar Nova Planilha</a>
   </section>
 
   <section class="box">
     <h2>Subir planilha</h2>
-    <form action="{{ url_for('main.upload') }}" method="post" enctype="multipart-form-data">
+    <form action="{{ url_for('main.upload') }}" method="post" enctype="multipart/form-data">
+      
       <input type="file" name="file" accept=".xlsx" required>
       <button type="submit">Fazer upload</button>
     </form>

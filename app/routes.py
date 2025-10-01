@@ -13,12 +13,22 @@ def index():
 @bp.route("/upload", methods=["POST"])
 def upload():
     uploaded = request.files.get("file")
+    
+    print("--- INICIANDO DEBUG DO UPLOAD ---")
+    print(f"Objeto do arquivo recebido: {uploaded}")
+    if uploaded:
+        print(f"Nome do arquivo recebido: '{uploaded.filename}'")
+    print("---------------------------------")
+
     if not uploaded or uploaded.filename == '':
+        print(">>> PROBLEMA DETECTADO: O nome do arquivo está vazio. Redirecionando para a página inicial.")
         return redirect(url_for("main.index"))
+        
     filename = services.save_uploaded_file(uploaded)
+    print(f">>> SUCESSO: Arquivo salvo como '{filename}'. Redirecionando para o dashboard.")
     return redirect(url_for("main.dashboard", file=filename))
 
-@bp.route("/dashboard")
+@bp.route("/dashboard",)
 def dashboard():
     file = request.args.get("file")
     if file == 'None': file = None

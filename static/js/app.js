@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const file = window.APP_FILE || null;
+    let isDirty = false;
+
+    window.addEventListener('beforeunload', (event) => {
+        if (isDirty) {
+
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
 
     const selCat = document.getElementById('select-category');
     const newCatInput = document.getElementById('new-category-name');
@@ -11,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 newCatInput.style.display = 'none';
             }
         });
+
         if (selCat.options.length <= 1 || selCat.value === '_new_') {
             selCat.value = '_new_';
             newCatInput.style.display = 'inline-block';
@@ -30,11 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             category = name;
         }
+        
+        const dateValue = document.getElementById('f-data').value;
+        let formattedDate = dateValue;
+        if (dateValue) {
+            const dateParts = dateValue.split('-');
+            if (dateParts.length === 3) {
+                formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+            }
+        }
+        
         const row = {
             nome: document.getElementById('f-nome').value,
             valor: parseFloat(document.getElementById('f-valor').value || 0),
             pago: document.getElementById('f-pago').checked,
-            data: document.getElementById('f-data').value,
+            data: formattedDate,
             obs: document.getElementById('f-obs').value
         };
 
@@ -44,28 +64,26 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ file, category, row })
         }).then(r => r.json()).then(res => {
             if (res.ok) {
-                if (file) {
-                    window.location.reload();
-                } else {
-                    addRowToDOM(category, res.row);
-                    
-                    document.getElementById('f-nome').value = '';
-                    document.getElementById('f-valor').value = '';
-                    document.getElementById('f-pago').checked = false;
-                    document.getElementById('f-data').value = '';
-                    document.getElementById('f-obs').value = '';
+                isDirty = true;
+                
+                addRowToDOM(category, res.row);
+                
+                document.getElementById('f-nome').value = '';
+                document.getElementById('f-valor').value = '';
+                document.getElementById('f-pago').checked = false;
+                document.getElementById('f-data').value = '';
+                document.getElementById('f-obs').value = '';
 
-                    const optionExists = selCat.querySelector(`option[value="${category}"]`);
-                    if (!optionExists) {
-                        const newOption = document.createElement('option');
-                        newOption.value = category;
-                        newOption.textContent = category;
-                        const newCatPlaceholder = selCat.querySelector('option[value="_new_"]');
-                        selCat.insertBefore(newOption, newCatPlaceholder);
-                    }
-                    selCat.value = category;
-                    newCatInput.style.display = 'none';
+                const optionExists = selCat.querySelector(`option[value="${category}"]`);
+                if (!optionExists) {
+                    const newOption = document.createElement('option');
+                    newOption.value = category;
+                    newOption.textContent = category;
+                    const newCatPlaceholder = selCat.querySelector('option[value="_new_"]');
+                    selCat.insertBefore(newOption, newCatPlaceholder);
                 }
+                selCat.value = category;
+                newCatInput.style.display = 'none';
             } else {
                 alert('Erro ao adicionar');
             }
@@ -81,14 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const container = document.createElement('div');
             container.className = 'cat-container';
             container.dataset.category = category;
-
+            
             let gastosList = document.getElementById('gastos-list');
             if (!gastosList) {
-                const containerSection = document.querySelector('.container');
+                const lastBox = Array.from(document.querySelectorAll('.box')).pop();
+                const containerSection = lastBox.parentNode;
                 const boxSection = document.createElement('section');
                 boxSection.className = 'box';
                 boxSection.innerHTML = `<h3>Seus Lançamentos</h3><div id="gastos-list" class="gastos-scroll"></div>`;
-                containerSection.appendChild(boxSection);
+                lastBox.insertAdjacentElement('afterend', boxSection);
                 gastosList = document.getElementById('gastos-list');
             }
             
@@ -123,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (btnDelCat) {
             const category = btnDelCat.dataset.category;
+            if (!confirm(`Tem certeza que deseja apagar a categoria "${category}" e todos os seus gastos?`)) return;
+
+            isDirty = true;
             if (!file) {
                 const catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
                 const catTitle = catContainer.previousElementSibling;
@@ -132,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(optionToRemove) optionToRemove.remove();
                 return;
             }
-            if (!confirm(`Tem certeza que deseja apagar a categoria "${category}" e todos os seus gastos?`)) return;
 
             fetch('/api/delete_category', {
                 method: 'POST',
@@ -140,15 +161,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ file, category })
             }).then(r => r.json()).then(res => {
                 if (res.ok) {
-                    window.location.reload();
+                    // Remove do DOM em vez de recarregar
+                    const catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
+                    const catTitle = catContainer.previousElementSibling;
+                    if (catContainer) catContainer.remove();
+                    if (catTitle) catTitle.remove();
                 } else {
                     alert('Erro ao apagar a categoria');
+                    isDirty = false; // Desfaz a marcação se deu erro
                 }
             });
             return;
         }
 
         if (btnDel) {
+            if (!confirm('Apagar este gasto?')) return;
+            isDirty = true;
             const item = btnDel.closest('.gasto-item');
             const id = item.dataset.id;
             if (!file) {
@@ -156,14 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             const category = item.closest('.cat-container').dataset.category;
-            if (!confirm('Apagar este gasto?')) return;
             fetch('/api/delete_row', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ file, category, id })
             }).then(r => r.json()).then(res => {
-                if (res.ok) item.remove();
-                else alert('Erro ao apagar');
+                if (res.ok) {
+                    item.remove();
+                } else {
+                    alert('Erro ao apagar');
+                    isDirty = false;
+                }
             });
         } else if (btnEdit) {
             const item = btnEdit.closest('.gasto-item');
@@ -173,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('gastos-list')?.addEventListener('change', (e) => {
         if (e.target.classList.contains('chk-pago')) {
+            isDirty = true;
             const item = e.target.closest('.gasto-item');
             if (!file) return;
             const id = item.dataset.id;
@@ -185,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(r => r.json()).then(res => {
                 if (!res.ok) {
                     alert('Erro ao atualizar pago');
-                    e.target.checked = !checked;
+                    isDirty = false;
                 }
             });
         }
@@ -195,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const gastoRow = item.querySelector('.gasto-row');
 
         if (item.dataset.editing === '1') {
+            isDirty = true;
             const nome = item.querySelector('input[data-field="nome"]').value;
             const valor = item.querySelector('input[data-field="valor"]').value;
             const dateInput = item.querySelector('input[data-field="data"]').value;
@@ -235,34 +268,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 const allOk = results.every(r => r.ok);
                 if (allOk) {
                     if (newCategory !== category) {
-                        window.location.reload();
-                    } else {
-                        item.querySelector('.nome').textContent = nome;
-                        item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
-                        item.querySelector('.data').textContent = displayData;
-                        item.querySelector('.obs').textContent = obs;
-                        item.dataset.editing = '0';
-                        item.querySelector('.gasto-edit-category-row').remove();
+                        // Move o item no DOM em vez de recarregar
+                        const targetContainer = document.querySelector(`.cat-container[data-category="${newCategory}"]`);
+                        targetContainer.appendChild(item);
                     }
+                    item.querySelector('.nome').textContent = nome;
+                    item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
+                    item.querySelector('.data').textContent = displayData;
+                    item.querySelector('.obs').textContent = obs;
+                    item.dataset.editing = '0';
+                    item.querySelector('.gasto-edit-category-row').remove();
                 } else {
                     alert('Alguma atualização falhou');
+                    isDirty = false;
                 }
             });
             return;
         }
 
         const originalCategory = item.closest('.cat-container').dataset.category;
-
         const nomeCell = item.querySelector('.nome');
         const valorCell = item.querySelector('.valor');
         const dataCell = item.querySelector('.data');
         const obsCell = item.querySelector('.obs');
-
         const nomeVal = nomeCell.textContent.trim();
         const valorVal = valorCell.textContent.replace(/[R$\s]/g, '').replace(',', '.').trim();
         const dataVal = dataCell.textContent.trim();
         const obsVal = obsCell.textContent.trim();
-        
         const dateParts = dataVal.split('/');
         const isoDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : '';
 
@@ -290,6 +322,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('btn-save')?.addEventListener('click', () => {
+        const saveButton = document.getElementById('btn-save');
+        const msg = document.getElementById('save-msg');
         const source_file = window.APP_FILE || null;
         let target_file = source_file;
 
@@ -307,8 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
             target_file = newFilename;
         }
 
-        const msg = document.getElementById('save-msg');
-        msg.textContent = 'Salvando...';
+        saveButton.disabled = true;
+        msg.textContent = 'Salvando planilha...';
+        msg.className = 'saving';
 
         fetch('/api/save', {
             method:'POST',
@@ -316,14 +351,29 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ source_file, target_file })
         }).then(r => r.json()).then(res => {
             if (res.ok) {
+                isDirty = false;
+                msg.textContent = 'Planilha salva com sucesso!';
+                msg.className = 'success';
+
                 if (!source_file) {
-                    window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
-                } else {
-                    msg.textContent = 'Salvo com sucesso.';
-                    setTimeout(()=> msg.textContent = '', 2500);
+                    setTimeout(() => {
+                        window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
+                    }, 1500);
                 }
             } else {
-                msg.textContent = 'Erro ao salvar.';
+                msg.textContent = 'Erro ao salvar a planilha.';
+                msg.className = 'error';
+            }
+        }).catch(() => {
+            msg.textContent = 'Erro de conexão ao salvar.';
+            msg.className = 'error';
+        }).finally(() => {
+            if (source_file) {
+                setTimeout(() => {
+                    saveButton.disabled = false;
+                    msg.textContent = '';
+                    msg.className = '';
+                }, 3000);
             }
         });
     });
