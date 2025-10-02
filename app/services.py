@@ -242,8 +242,5 @@ def save_structure_to_excel(source_filename, target_filename):
     except Exception as e:
         print("Erro salvando excel:", e)
         return False
-
-    if source_filename != target_filename:
-        _struct_cache.pop(source_filename, None)
-        
+    
     return True

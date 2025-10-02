@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('beforeunload', (event) => {
         if (isDirty) {
-
             event.preventDefault();
             event.returnValue = '';
         }
@@ -65,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }).then(r => r.json()).then(res => {
             if (res.ok) {
                 isDirty = true;
-                
                 addRowToDOM(category, res.row);
                 
                 document.getElementById('f-nome').value = '';
@@ -161,14 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ file, category })
             }).then(r => r.json()).then(res => {
                 if (res.ok) {
-                    // Remove do DOM em vez de recarregar
                     const catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
                     const catTitle = catContainer.previousElementSibling;
                     if (catContainer) catContainer.remove();
                     if (catTitle) catTitle.remove();
                 } else {
                     alert('Erro ao apagar a categoria');
-                    isDirty = false; // Desfaz a marcação se deu erro
+                    isDirty = false;
                 }
             });
             return;
@@ -206,7 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('chk-pago')) {
             isDirty = true;
             const item = e.target.closest('.gasto-item');
-            if (!file) return;
+            
+            if (!file) {
+                return;
+            }
+
             const id = item.dataset.id;
             const category = item.closest('.cat-container').dataset.category;
             const checked = e.target.checked;
@@ -235,8 +236,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const dateParts = dateInput.split('-');
             const displayData = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : '';
+            
+            const newCategorySelect = item.querySelector('select[data-field="category"]');
+            const newCategory = newCategorySelect ? newCategorySelect.value : item.closest('.cat-container').dataset.category;
 
             if (!file) {
+                if (newCategory && newCategory !== item.closest('.cat-container').dataset.category) {
+                    const targetContainer = document.querySelector(`.cat-container[data-category="${newCategory}"]`);
+                    targetContainer.appendChild(item);
+                }
                 item.querySelector('.nome').textContent = nome;
                 item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
                 item.querySelector('.data').textContent = displayData;
@@ -249,14 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const id = item.dataset.id;
             const category = item.closest('.cat-container').dataset.category;
-            const newCategory = item.querySelector('select[data-field="category"]').value;
-
+            
             let updates = [
                 {field: 'nome', value: nome}, {field: 'valor', value: valor},
                 {field: 'data', value: displayData}, {field: 'obs', value: obs}
             ];
 
-            if (newCategory !== category) {
+            if (newCategory && newCategory !== category) {
                 updates.push({field: 'category', value: newCategory});
             }
 
@@ -267,8 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(r => r.json()))).then(results => {
                 const allOk = results.every(r => r.ok);
                 if (allOk) {
-                    if (newCategory !== category) {
-                        // Move o item no DOM em vez de recarregar
+                    if (newCategory && newCategory !== category) {
                         const targetContainer = document.querySelector(`.cat-container[data-category="${newCategory}"]`);
                         targetContainer.appendChild(item);
                     }
@@ -303,8 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dataCell.innerHTML = `<input type="date" data-field="data" value="${isoDate}">`;
         obsCell.innerHTML = `<input type="text" data-field="obs" value="${obsVal}">`;
         
-        if (file) {
-            const allCategories = Array.from(document.querySelectorAll('.cat-container')).map(c => c.dataset.category);
+        const allCategories = Array.from(document.querySelectorAll('.cat-container')).map(c => c.dataset.category);
+        if (allCategories.length > 0) {
             let categorySelectHTML = `<select data-field="category">`;
             allCategories.forEach(c => {
                 categorySelectHTML += `<option value="${c}" ${c === originalCategory ? 'selected' : ''}>${c}</option>`;
@@ -321,25 +327,31 @@ document.addEventListener('DOMContentLoaded', () => {
         item.dataset.editing = '1';
     }
 
+    // --- LÓGICA DO BOTÃO SALVAR RESTAURADA ---
     document.getElementById('btn-save')?.addEventListener('click', () => {
         const saveButton = document.getElementById('btn-save');
         const msg = document.getElementById('save-msg');
         const source_file = window.APP_FILE || null;
         let target_file = source_file;
 
-        if (!source_file) {
-            let newFilename = prompt("Por favor, digite o nome para a nova planilha:", "minhas_financas.xlsx");
-            
-            if (!newFilename || newFilename.trim() === '') {
-                alert("O salvamento foi cancelado. É preciso fornecer um nome para o arquivo.");
-                return;
-            }
+        // Se for uma planilha existente, transforma em "Salvar Como..."
+        const date = new Date();
+        const monthNames = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        const defaultFilename = `gastos_${month}_${year}.xlsx`;
 
-            if (!newFilename.toLowerCase().endsWith('.xlsx')) {
-                newFilename += '.xlsx';
-            }
-            target_file = newFilename;
+        let newFilename = prompt("Por favor, digite o nome para salvar a planilha:", defaultFilename);
+        
+        if (!newFilename || newFilename.trim() === '') {
+            alert("O salvamento foi cancelado. É preciso fornecer um nome para o arquivo.");
+            return;
         }
+
+        if (!newFilename.toLowerCase().endsWith('.xlsx')) {
+            newFilename += '.xlsx';
+        }
+        target_file = newFilename;
 
         saveButton.disabled = true;
         msg.textContent = 'Salvando planilha...';
@@ -355,26 +367,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 msg.textContent = 'Planilha salva com sucesso!';
                 msg.className = 'success';
 
-                if (!source_file) {
-                    setTimeout(() => {
-                        window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
-                    }, 1500);
-                }
+                setTimeout(() => {
+                    window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
+                }, 1500);
+                
             } else {
                 msg.textContent = 'Erro ao salvar a planilha.';
                 msg.className = 'error';
-            }
-        }).catch(() => {
-            msg.textContent = 'Erro de conexão ao salvar.';
-            msg.className = 'error';
-        }).finally(() => {
-            if (source_file) {
                 setTimeout(() => {
                     saveButton.disabled = false;
                     msg.textContent = '';
                     msg.className = '';
                 }, 3000);
             }
+        }).catch(() => {
+            msg.textContent = 'Erro de conexão ao salvar.';
+            msg.className = 'error';
+            setTimeout(() => {
+                saveButton.disabled = false;
+                msg.textContent = '';
+                msg.className = '';
+            }, 3000);
         });
     });
 });
