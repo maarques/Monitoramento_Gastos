@@ -1,14 +1,14 @@
+from flask import Flask
+from pathlib import Path
 import os
-from flask import Flask, jsonify
 
 def create_app():
-    app = Flask(__name__)
-    upload_folder = '/tmp/data'
-    app.config['UPLOAD_FOLDER'] = upload_folder
+    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app.config['UPLOAD_FOLDER'] = str(Path.cwd() / "data")
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-    return app
+    from . import routes
+    app.register_blueprint(routes.bp)
 
-if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
+    return app
