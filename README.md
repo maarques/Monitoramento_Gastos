@@ -55,7 +55,7 @@ Siga os passos abaixo para rodar a aplicação em seu ambiente local.
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/maarques/Monitoramento_Gastos.git](https://github.com/maarques/Monitoramento_Gastos.git)
+    git clone https://github.com/maarques/Monitoramento_Gastos.git
     ```
 
 2.  **Navegue até a pasta do projeto:**
@@ -82,7 +82,7 @@ Siga os passos abaixo para rodar a aplicação em seu ambiente local.
 
 5.  **Execute a aplicação:**
     ```bash
-    flask run
+    python run.py
     ```
 
 6.  **Acesse no seu navegador:**
