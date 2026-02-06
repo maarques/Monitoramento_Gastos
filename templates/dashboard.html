@@ -7,6 +7,16 @@
     <h3>Arquivo Aberto: <span>{{ file or "(nenhum)" }}</span></h3>
   </div>
 
+  <section class="box" style="border-left: 5px solid #005A3A;">
+    <h2>Definir Salário</h2>
+    <div style="display: flex; gap: 15px; align-items: center;">
+      <div class="form-group" style="flex: 1;">
+        <label for="salary-input" style="font-weight: bold; display: block; margin-bottom: 5px;">Salário Mensal (R$)</label>
+        <input type="number" id="salary-input" placeholder="0.00" step="0.01" style="font-size: 1.5em; padding: 10px; color: #005A3A;">
+      </div>
+    </div>
+  </section>
+
   <section class="box">
     <h2>Adicionar novo lançamento</h2>
 
@@ -84,9 +94,15 @@
           </div>
         {% endfor %}
       {% else %}
-        <p>Nenhum lançamento carregado.</p>
+        <p id="msg-empty">Nenhum lançamento carregado.</p>
       {% endif %}
     </div>
+  </section>
+
+  <section class="box" style="text-align: center; background-color: #e8f3ee; border: 2px solid #005A3A;">
+    <h3>Saldo Restante</h3>
+    <h1 id="balance-display" style="color: #005A3A; font-size: 3em; margin: 10px 0;">R$ 0.00</h1>
+    <p style="color: #555;">(Salário - Total de Gastos)</p>
   </section>
 
   <section class="box save-section">

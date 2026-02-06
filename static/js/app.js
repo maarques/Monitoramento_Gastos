@@ -2,6 +2,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = window.APP_FILE || null;
     let isDirty = false;
 
+    // --- LÓGICA DE SALÁRIO E SALDO (NOVO) ---
+    const salaryInput = document.getElementById('salary-input');
+    const balanceDisplay = document.getElementById('balance-display');
+    const fileId = window.APP_FILE || 'default_salary'; 
+
+    // 1. Carregar salário salvo
+    const savedSalary = localStorage.getItem('salary_' + fileId);
+    if (savedSalary && salaryInput) {
+        salaryInput.value = savedSalary;
+    }
+
+    // 2. Função para atualizar o saldo
+    function updateBalance() {
+        if (!salaryInput || !balanceDisplay) return;
+
+        // Pega o salário (se vazio, assume 0)
+        const salary = parseFloat(salaryInput.value) || 0;
+        
+        // Salva
+        localStorage.setItem('salary_' + fileId, salary);
+
+        // Soma gastos
+        let totalGastos = 0;
+        document.querySelectorAll('.gasto-col.valor').forEach(el => {
+            const valorTexto = el.textContent.replace('R$', '').trim();
+            const valor = parseFloat(valorTexto);
+            if (!isNaN(valor)) {
+                totalGastos += valor;
+            }
+        });
+
+        // Calcula e exibe
+        const restante = salary - totalGastos;
+        if (restante >= 0) {
+            balanceDisplay.style.color = "#005A3A"; // Verde
+        } else {
+            balanceDisplay.style.color = "#dc3545"; // Vermelho
+        }
+        balanceDisplay.textContent = 'R$ ' + restante.toFixed(2);
+    }
+
+    if (salaryInput) {
+        salaryInput.addEventListener('input', updateBalance);
+    }
+    // Executa inicial
+    updateBalance();
+    // ----------------------------------------
+
     window.addEventListener('beforeunload', (event) => {
         if (isDirty) {
             event.preventDefault();
@@ -65,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 isDirty = true;
                 addRowToDOM(category, res.row);
-                
+                updateBalance(); // Atualiza o saldo ao adicionar
+
                 document.getElementById('f-nome').value = '';
                 document.getElementById('f-valor').value = '';
                 document.getElementById('f-pago').checked = false;
@@ -89,6 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function addRowToDOM(category, row) {
+        const msgEmpty = document.getElementById('msg-empty');
+        if (msgEmpty) {
+            msgEmpty.remove();
+        }
         let catContainer = document.querySelector(`.cat-container[data-category="${category}"]`);
         if (!catContainer) {
             const title = document.createElement('h4');
@@ -150,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (catTitle) catTitle.remove();
                 const optionToRemove = selCat.querySelector(`option[value="${category}"]`);
                 if(optionToRemove) optionToRemove.remove();
+                setTimeout(updateBalance, 50); // Atualiza saldo após apagar categoria local
                 return;
             }
 
@@ -163,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const catTitle = catContainer.previousElementSibling;
                     if (catContainer) catContainer.remove();
                     if (catTitle) catTitle.remove();
+                    setTimeout(updateBalance, 50); // Atualiza saldo após apagar categoria
                 } else {
                     alert('Erro ao apagar a categoria');
                     isDirty = false;
@@ -178,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = item.dataset.id;
             if (!file) {
                 item.remove();
+                setTimeout(updateBalance, 50); // Atualiza saldo após apagar local
                 return;
             }
             const category = item.closest('.cat-container').dataset.category;
@@ -188,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(r => r.json()).then(res => {
                 if (res.ok) {
                     item.remove();
+                    setTimeout(updateBalance, 50); // Atualiza saldo após apagar
                 } else {
                     alert('Erro ao apagar');
                     isDirty = false;
@@ -252,6 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.dataset.editing = '0';
                 const categoryRow = item.querySelector('.gasto-edit-category-row');
                 if (categoryRow) categoryRow.remove();
+                
+                updateBalance(); // Atualiza saldo após editar local
                 return;
             }
 
@@ -284,6 +343,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.querySelector('.obs').textContent = obs;
                     item.dataset.editing = '0';
                     item.querySelector('.gasto-edit-category-row').remove();
+                    
+                    updateBalance(); // Atualiza saldo após editar
                 } else {
                     alert('Alguma atualização falhou');
                     isDirty = false;
@@ -327,14 +388,12 @@ document.addEventListener('DOMContentLoaded', () => {
         item.dataset.editing = '1';
     }
 
-    // --- LÓGICA DO BOTÃO SALVAR RESTAURADA ---
     document.getElementById('btn-save')?.addEventListener('click', () => {
         const saveButton = document.getElementById('btn-save');
         const msg = document.getElementById('save-msg');
         const source_file = window.APP_FILE || null;
         let target_file = source_file;
 
-        // Se for uma planilha existente, transforma em "Salvar Como..."
         const date = new Date();
         const monthNames = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
         const month = monthNames[date.getMonth()];
