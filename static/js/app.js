@@ -15,7 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Função para atualizar o saldo
     function updateBalance() {
-        if (!salaryInput || !balanceDisplay) return;
+        const balanceDisplay = document.getElementById('balance-display');
+        const creditDisplay = document.getElementById('credit-display'); // <-- Pega o novo card amarelo
+        
+        if (!salaryInput || !balanceDisplay || !creditDisplay) return;
 
         // Pega o salário (se vazio, assume 0)
         const salary = parseFloat(salaryInput.value) || 0;
@@ -23,24 +26,44 @@ document.addEventListener('DOMContentLoaded', () => {
         // Salva
         localStorage.setItem('salary_' + fileId, salary);
 
-        // Soma gastos
-        let totalGastos = 0;
-        document.querySelectorAll('.gasto-col.valor').forEach(el => {
-            const valorTexto = el.textContent.replace('R$', '').trim();
-            const valor = parseFloat(valorTexto);
-            if (!isNaN(valor)) {
-                totalGastos += valor;
+        // Zera os contadores separados
+        let totalDebito = 0;
+        let totalCredito = 0;
+
+        // Percorre CADA LINHA de gasto, e não apenas o valor
+        document.querySelectorAll('.gasto-item').forEach(item => {
+            const valorEl = item.querySelector('.gasto-col.valor');
+            const formaEl = item.querySelector('.gasto-col.payment'); // <-- Pega a coluna da forma de pagamento
+            
+            if (valorEl) {
+                const valorTexto = valorEl.textContent.replace('R$', '').trim();
+                const valor = parseFloat(valorTexto);
+                
+                if (!isNaN(valor)) {
+                    // Se a coluna de pagamento existir, pega o texto. Se não, assume Débito.
+                    const forma = formaEl ? formaEl.textContent.trim() : 'Débito';
+                    
+                    // Separa a soma dependendo do texto!
+                    if (forma === 'Crédito') {
+                        totalCredito += valor;
+                    } else {
+                        totalDebito += valor;
+                    }
+                }
             }
         });
 
-        // Calcula e exibe
-        const restante = salary - totalGastos;
+        // 1. Calcula o Saldo (Salário menos apenas Débito/Pix/Dinheiro)
+        const restante = salary - totalDebito;
         if (restante >= 0) {
             balanceDisplay.style.color = "#005A3A"; // Verde
         } else {
             balanceDisplay.style.color = "#dc3545"; // Vermelho
         }
         balanceDisplay.textContent = 'R$ ' + restante.toFixed(2);
+
+        // 2. Mostra o valor da Fatura (Apenas Crédito)
+        creditDisplay.textContent = 'R$ ' + totalCredito.toFixed(2);
     }
 
     if (salaryInput) {
@@ -102,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             valor: parseFloat(document.getElementById('f-valor').value || 0),
             pago: document.getElementById('f-pago').checked,
             data: formattedDate,
+            forma_pagamento: document.getElementById('f-forma_pagamento').value,
             obs: document.getElementById('f-obs').value
         };
 
@@ -176,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="gasto-col valor" data-field="valor">R$ ${Number(row.valor).toFixed(2)}</div>
             <div class="gasto-col pago" data-field="pago"><input type="checkbox" class="chk-pago" ${row.pago ? 'checked' : ''}></div>
             <div class="gasto-col data" data-field="data">${row.data || ''}</div>
+            <div class="gasto-col payment" data-field="forma_pagamento">${row.forma_pagamento || 'Débito'}</div> <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
             <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
             <div class="gasto-col actions">
               <button class="btn-edit">Editar</button>
@@ -284,12 +309,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleEdit(item) {
         const gastoRow = item.querySelector('.gasto-row');
 
+        // ==== MODO: SALVAR A EDIÇÃO ====
         if (item.dataset.editing === '1') {
             isDirty = true;
             const nome = item.querySelector('input[data-field="nome"]').value;
             const valor = item.querySelector('input[data-field="valor"]').value;
             const dateInput = item.querySelector('input[data-field="data"]').value;
             const obs = item.querySelector('input[data-field="obs"]').value;
+            const forma = item.querySelector('select[data-field="forma_pagamento"]').value; // <-- Lê a nova forma
             
             const dateParts = dateInput.split('-');
             const displayData = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : '';
@@ -297,6 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newCategorySelect = item.querySelector('select[data-field="category"]');
             const newCategory = newCategorySelect ? newCategorySelect.value : item.closest('.cat-container').dataset.category;
 
+            // Se for uma planilha nova (não salva)
             if (!file) {
                 if (newCategory && newCategory !== item.closest('.cat-container').dataset.category) {
                     const targetContainer = document.querySelector(`.cat-container[data-category="${newCategory}"]`);
@@ -305,21 +333,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.querySelector('.nome').textContent = nome;
                 item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
                 item.querySelector('.data').textContent = displayData;
+                item.querySelector('.payment').textContent = forma; // <-- Atualiza a tela
                 item.querySelector('.obs').textContent = obs;
                 item.dataset.editing = '0';
                 const categoryRow = item.querySelector('.gasto-edit-category-row');
                 if (categoryRow) categoryRow.remove();
                 
-                updateBalance(); // Atualiza saldo após editar local
+                updateBalance();
                 return;
             }
 
+            // Se for planilha existente, manda pro backend
             const id = item.dataset.id;
             const category = item.closest('.cat-container').dataset.category;
             
             let updates = [
-                {field: 'nome', value: nome}, {field: 'valor', value: valor},
-                {field: 'data', value: displayData}, {field: 'obs', value: obs}
+                {field: 'nome', value: nome}, 
+                {field: 'valor', value: valor},
+                {field: 'data', value: displayData}, 
+                {field: 'forma_pagamento', value: forma}, // <-- Manda salvar a nova forma
+                {field: 'obs', value: obs}
             ];
 
             if (newCategory && newCategory !== category) {
@@ -340,11 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.querySelector('.nome').textContent = nome;
                     item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
                     item.querySelector('.data').textContent = displayData;
+                    item.querySelector('.payment').textContent = forma; // <-- Atualiza a tela
                     item.querySelector('.obs').textContent = obs;
                     item.dataset.editing = '0';
                     item.querySelector('.gasto-edit-category-row').remove();
                     
-                    updateBalance(); // Atualiza saldo após editar
+                    updateBalance(); 
                 } else {
                     alert('Alguma atualização falhou');
                     isDirty = false;
@@ -353,22 +387,38 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // ==== MODO: ENTRAR EM EDIÇÃO ====
         const originalCategory = item.closest('.cat-container').dataset.category;
         const nomeCell = item.querySelector('.nome');
         const valorCell = item.querySelector('.valor');
         const dataCell = item.querySelector('.data');
+        const formaCell = item.querySelector('.payment'); // <-- Pega a célula do pagamento
         const obsCell = item.querySelector('.obs');
+        
         const nomeVal = nomeCell.textContent.trim();
         const valorVal = valorCell.textContent.replace(/[R$\s]/g, '').replace(',', '.').trim();
         const dataVal = dataCell.textContent.trim();
+        const formaVal = formaCell ? formaCell.textContent.trim() : 'Débito'; // <-- Pega o valor atual
         const obsVal = obsCell.textContent.trim();
+        
         const dateParts = dataVal.split('/');
         const isoDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : '';
 
+        // Transforma tudo em campos de input
         nomeCell.innerHTML = `<input type="text" data-field="nome" value="${nomeVal}">`;
         valorCell.innerHTML = `<input type="number" data-field="valor" value="${valorVal}">`;
         dataCell.innerHTML = `<input type="date" data-field="data" value="${isoDate}">`;
         obsCell.innerHTML = `<input type="text" data-field="obs" value="${obsVal}">`;
+        
+        // Transforma a forma de pagamento em um dropdown (select) selecionando o atual
+        formaCell.innerHTML = `
+            <select data-field="forma_pagamento">
+                <option value="Débito" ${formaVal === 'Débito' ? 'selected' : ''}>Débito</option>
+                <option value="Crédito" ${formaVal === 'Crédito' ? 'selected' : ''}>Crédito</option>
+                <option value="Pix" ${formaVal === 'Pix' ? 'selected' : ''}>Pix</option>
+                <option value="Dinheiro" ${formaVal === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option>
+            </select>
+        `;
         
         const allCategories = Array.from(document.querySelectorAll('.cat-container')).map(c => c.dataset.category);
         if (allCategories.length > 0) {

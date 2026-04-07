@@ -8,6 +8,7 @@ class Expense:
     valor: float
     pago: bool
     data: Optional[str] = None
+    forma_pagamento: Optional[str] = "Débito"
     obs: Optional[str] = None
 
     def to_dict(self):
@@ -17,5 +18,6 @@ class Expense:
             "valor": self.valor,
             "pago": self.pago,
             "data": self.data,
+            "forma_pagamento": self.forma_pagamento,
             "obs": self.obs
         }

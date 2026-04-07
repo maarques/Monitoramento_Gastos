@@ -195,15 +195,25 @@ button:disabled {
   gap: 15px;
 }
 .gasto-col { flex-shrink: 0; }
-.gasto-col.nome { flex: 3; min-width: 150px; font-weight: bold; }
-.gasto-col.valor { flex: 1.5; min-width: 100px; }
-.gasto-col.data { flex: 1.5; min-width: 120px; }
-.gasto-col.obs { flex: 4; min-width: 150px; color: #666; }
-.gasto-col.pago { flex: 0.5; min-width: 60px; text-align: center;}
-.gasto-col.actions { flex: 1.5; min-width: 180px; text-align: right;}
+.gasto-col.nome { flex: 2; min-width: 120px; font-weight: bold; }
+.gasto-col.valor { flex: 1.2; min-width: 90px; }
+.gasto-col.pago { flex: 0.5; min-width: 50px; text-align: center;}
+.gasto-col.data { flex: 1.2; min-width: 100px; }
+.gasto-col.payment { flex: 1.2; min-width: 90px; } /* Nossa coluna nova! */
+.gasto-col.obs { flex: 2; min-width: 120px; color: #666; }
+.gasto-col.actions { 
+    flex: 1.5; 
+    min-width: 140px; /* Damos um pouco mais de espaço para não amassar */
+    display: flex; 
+    justify-content: flex-end; /* Mantém alinhado à direita */
+    align-items: center; /* Alinha os botões no meio, bonitinhos */
+    gap: 8px; /* Força o espaço entre o botão Editar e Apagar */
+    padding-right: 15px; /* Empurra os botões um pouco para a esquerda */
+}
 .gasto-row input[type="text"],
 .gasto-row input[type="number"],
-.gasto-row input[type="date"] {
+.gasto-row input[type="date"],
+.gasto-row select {
     width: 100%;
     padding: 6px;
     font-size: 1em;
@@ -244,7 +254,7 @@ button:disabled {
   font-weight: 500;
   background-color: #c82333;
 }
-.btn-edit { background-color: #007bff; margin-right: 8px; }
+.btn-edit { background-color: #007bff; }
 .btn-delete { background-color: #dc3545; }
 
 @media (max-width: 768px) {

@@ -52,6 +52,7 @@ def read_excel_to_structure(filename):
             pago = get_col("pago", "paid", False)
             data = get_col("data", "data_pagamento", "date", "")
             obs = get_col("observacoes", "obs", "observação", "")
+            forma_pagamento = get_col("forma_pagamento", "forma de pagamento", "pagamento", default="Débito")
 
             try:
                 valor_f = float(valor) if pd.notna(valor) else 0.0
@@ -86,6 +87,7 @@ def read_excel_to_structure(filename):
                 valor=valor_f,
                 pago=bool(pago_b),
                 data=data_str,
+                forma_pagamento=str(forma_pagamento) if not pd.isna(forma_pagamento) else "Débito",
                 obs=str(obs) if not pd.isna(obs) else ""
             )
             rows.append(gasto.to_dict())
@@ -172,6 +174,7 @@ def add_row(payload):
         "valor": float(row.get("valor") or 0.0),
         "pago": bool(row.get("pago") or False),
         "data": row.get("data") or None,
+        "forma_pagamento": row.get("forma_pagamento", "Débito"),
         "obs": row.get("obs") or ""
     }
     struct[cat].append(new_gasto)
@@ -222,7 +225,7 @@ def save_structure_to_excel(source_filename, target_filename):
     try:
         with pd.ExcelWriter(path, engine="openpyxl") as writer:
             for sheet, rows in struct.items():
-                df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "obs"])
+                df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "forma_pagamento", "obs"])
                 sheet_name = str(sheet)[:31]
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
 
@@ -231,7 +234,7 @@ def save_structure_to_excel(source_filename, target_filename):
         downloads_path = os.path.join(downloads_dir, safe_target_filename)
         with pd.ExcelWriter(downloads_path, engine="openpyxl") as writer:
             for sheet, rows in struct.items():
-                df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "obs"])
+                df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["id", "nome", "valor", "pago", "data", "forma_pagamento", "obs"])
                 if "id" in df.columns:
                     df_download = df.drop(columns=["id"])
                 else:
