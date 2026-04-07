@@ -11,7 +11,7 @@ Uma ferramenta web simples e intuitiva para visualizar e gerenciar seus gastos a
 ### ✨ Visualização do Projeto
 
 <p align="center">
-  <img width="1363" height="636" alt="Image" src="https://github.com/user-attachments/assets/d5579c0d-4173-4c58-8815-3c25d447b741" />
+  <img width="547" height="687" alt="Image" src="https://github.com/user-attachments/assets/29cddec5-7bc1-488e-b82c-efeed441ad9e" />
 </p>
 
 ---
@@ -21,8 +21,9 @@ Uma ferramenta web simples e intuitiva para visualizar e gerenciar seus gastos a
 * **Criação do Zero:** Comece uma nova planilha de controle financeiro diretamente na aplicação.
 * **Upload de Planilhas:** Carregue seus arquivos `.xlsx` existentes para visualização e edição.
 * **Gerenciamento de Lançamentos:** Adicione, edite e apague gastos de forma fácil e rápida.
+* **Controle de Saldo e Fatura:** Diferencie a forma de pagamento de cada gasto. O sistema calcula automaticamente o seu **Saldo em Conta** real (descontando Débito, Pix e Dinheiro do seu salário) e acumula separadamente a **Fatura do Cartão** (gastos no Crédito).
 * **Sistema de Categorias:** As abas da sua planilha são transformadas em categorias, permitindo organizar seus gastos.
-* **Edição Completa:** Altere qualquer informação de um lançamento, incluindo mover um gasto entre categorias.
+* **Edição Completa:** Altere qualquer informação de um lançamento, incluindo a forma de pagamento e mover um gasto entre categorias.
 * **Feedback em Tempo Real:** A interface responde às suas ações, com mensagens de salvamento e avisos para não perder alterações.
 * **Salvamento e Download:** Salve as alterações na planilha no servidor e baixe uma cópia para seu computador a qualquer momento.
 
@@ -39,7 +40,7 @@ Uma ferramenta web simples e intuitiva para visualizar e gerenciar seus gastos a
 * **Frontend:**
     * **HTML5** com templates **Jinja2**.
     * **CSS3** para estilização, com foco em uma interface limpa e amigável.
-    * **JavaScript (Vanilla)** para a interatividade da página, como edições em tempo real, avisos e feedback ao usuário.
+    * **JavaScript (Vanilla)** para a interatividade da página, como edições em tempo real, cálculos automáticos de saldo, avisos e feedback ao usuário.
 
 ---
 
@@ -55,7 +56,7 @@ Siga os passos abaixo para rodar a aplicação em seu ambiente local.
 
 1.  **Clone o repositório:**
     ```bash
-    git clone https://github.com/maarques/Monitoramento_Gastos.git
+    git clone [https://github.com/maarques/Monitoramento_Gastos.git](https://github.com/maarques/Monitoramento_Gastos.git)
     ```
 
 2.  **Navegue até a pasta do projeto:**
@@ -91,9 +92,8 @@ Siga os passos abaixo para rodar a aplicação em seu ambiente local.
 ---
 
 ### 📁 Estrutura do Projeto
-
-O projeto é organizado da seguinte forma para separar as responsabilidades:
 ```
+O projeto é organizado da seguinte forma para separar as responsabilidades:
 Monitoramento_Gastos/
 ├── app/                  # Contém o núcleo da aplicação Flask
 │   ├── static/           # Arquivos estáticos (CSS, JS)
