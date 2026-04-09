@@ -1,11 +1,101 @@
+ /* VARIÁVEIS DE TEMA (CLARO / ESCURO)*/
+
+:root {
+  --bg-body: #f4f7f6;
+  --bg-card: #ffffff;
+  --bg-brand: #005A3A;
+  --bg-highlight: #e8f3ee;
+  --bg-edit-row: #f8f9fa;
+  --bg-input: #ffffff;
+
+  --text-main: #333333;
+  --text-heading: #2f4f4f;
+  --text-brand: #005A3A;
+  --text-muted: #666666;
+  --text-light: #ffffff;
+
+  --border-main: #e0e0e0;
+  --border-highlight: #d4e3dc;
+  --border-input: #cccccc;
+  --border-item: #eeeeee;
+
+  --btn-success: #28a745;
+  --btn-primary: #005A3A;
+  --btn-edit: #007bff;
+  --btn-delete: #dc3545;
+  --btn-disabled: #cccccc;
+
+  --msg-saving: #007bff;
+  --msg-success: #28a745;
+  --msg-error: #dc3545;
+
+  --bg-card-saldo: #e8f5e9;
+  --border-card-saldo: #c8e6c9;
+  
+  --bg-card-fatura: #fff8e1;
+  --border-card-fatura: #ffecb3;
+}
+
+[data-theme="dark"] {
+  /* Fundo da página*/
+  --bg-body: #0d1117;
+  /* Cartões */
+  --bg-card: #161b22;
+  /* Header  */
+  --bg-brand: #1e293b; 
+  /* Destaques  */
+  --bg-highlight: #1e293b;
+  --bg-edit-row: #0d1117;
+  --bg-input: #0d1117;
+
+  /* Textos */
+  --text-main: #c9d1d9;
+  --text-heading: #e6edf3;
+  --text-brand: #e6edf3;
+  --text-muted: #8b949e;
+  --text-light: #ffffff;
+
+  /* Bordas mais contidas */
+  --border-main: #30363d;
+  --border-highlight: #30363d;
+  --border-input: #30363d;
+  --border-item: #21262d;
+
+  /* Botões Muted*/
+  --btn-success: #115e59; 
+  --btn-primary: #064e3b; 
+
+  --btn-edit: var(--bg-brand); 
+
+  --btn-delete: #7f1d1d; 
+  --btn-disabled: #334155;
+
+  /* Mensagens de sucesso/erro */
+  --msg-saving: #38bdf8;
+  --msg-success: #34d399;
+  --msg-error: #f87171;
+
+  --bg-card-saldo: rgba(16, 185, 129, 0.05);
+  --border-card-saldo: rgba(16, 185, 129, 0.2);
+  
+  --bg-card-fatura: rgba(245, 158, 11, 0.05);
+  --border-card-fatura: rgba(245, 158, 11, 0.2);
+}
+
+/* ESTILOS GERAIS*/
 *, *:before, *:after {
   box-sizing: border-box;
 }
+
+body, .box, .topbar, .file-title-container, .cat-title, input, select, button, .gasto-item {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
-  background-color: #f4f7f6;
-  color: #333;
+  background-color: var(--bg-body);
+  color: var(--text-main);
   font-size: 16px;
 }
 main.container {
@@ -14,35 +104,35 @@ main.container {
   padding: 0 15px;
 }
 h1, h2, h3, h4 {
-  color: #2f4f4f;
+  color: var(--text-heading);
 }
 .file-title-container {
-  background-color: #e8f3ee;
+  background-color: var(--bg-highlight);
   padding: 15px 25px;
   border-radius: 8px;
   margin-bottom: 25px;
-  border: 1px solid #d4e3dc;
+  border: 1px solid var(--border-highlight);
 }
 .file-title-container h3 {
   margin: 0;
   font-size: 1.2em;
-  color: #005A3A;
+  color: var(--text-brand);
 }
 .file-title-container h3 span {
   font-weight: 500;
-  color: #333;
+  color: var(--text-main);
 }
 
 .topbar {
-  background-color: #005A3A;
-  color: white;
+  background-color: var(--bg-brand);
+  color: var(--text-light);
   padding: 15px 30px;
   text-align: center;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 .topbar h1 {
   margin: 0;
-  color: white;
+  color: var(--text-light);
   font-size: 1.8em;
 }
 .header-link {
@@ -52,12 +142,12 @@ h1, h2, h3, h4 {
 }
 
 .box {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border-radius: 8px;
   padding: 25px;
   margin-bottom: 25px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-main);
 }
 .box form {
     display: flex;
@@ -65,7 +155,7 @@ h1, h2, h3, h4 {
     gap: 15px;
 }
 .box form button {
-    background-color: #28a745;
+    background-color: var(--btn-success);
     flex-shrink: 0;
 }
 .button-action {
@@ -75,9 +165,9 @@ h1, h2, h3, h4 {
   padding: 12px 20px;
   border-radius: 6px;
   cursor: pointer;
-  color: white;
+  color: var(--text-light);
   text-decoration: none;
-  background-color: #28a745;
+  background-color: var(--btn-success);
   transition: background-color 0.2s ease, transform 0.1s ease;
   border: none;
 }
@@ -108,7 +198,7 @@ h1, h2, h3, h4 {
 .add-form .form-group label {
   margin-bottom: 8px;
   font-weight: bold;
-  color: #555;
+  color: var(--text-muted);
   font-size: 1em;
 }
 .add-form .category-selector {
@@ -118,7 +208,9 @@ h1, h2, h3, h4 {
 input[type="text"], input[type="number"], input[type="date"], select {
   font-size: 1.1em;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
+  background-color: var(--bg-input);
+  color: var(--text-main);
   border-radius: 6px;
   width: 100%;
 }
@@ -138,22 +230,22 @@ button {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  color: white;
+  color: var(--text-light);
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 button:hover { opacity: 0.9; }
 button:active { transform: scale(0.98); }
 
 button:disabled {
-  background-color: #cccccc;
+  background-color: var(--btn-disabled);
   cursor: not-allowed;
   opacity: 0.7;
 }
 
-#btn-add { background-color: #28a745; }
+#btn-add { background-color: var(--btn-success); }
 #btn-save {
   width: 100%;
-  background-color: #005A3A;
+  background-color: var(--btn-primary);
 }
 .save-section { text-align: center; }
 
@@ -165,27 +257,28 @@ button:disabled {
   transition: color 0.3s ease;
 }
 #save-msg.saving {
-  color: #007bff;
+  color: var(--msg-saving);
 }
 #save-msg.success {
-  color: #28a745;
+  color: var(--msg-success);
 }
 #save-msg.error {
-  color: #dc3545;
+  color: var(--msg-error);
 }
 
 .cat-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #e8f3ee;
+  background-color: var(--bg-highlight);
   padding: 10px 15px;
   border-radius: 6px;
   margin-top: 25px;
   font-size: 1.4em;
+  border: 1px solid var(--border-highlight);
 }
 .gasto-item {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-item);
   padding: 15px 10px;
 }
 .gasto-item:last-child { border-bottom: none; }
@@ -199,16 +292,16 @@ button:disabled {
 .gasto-col.valor { flex: 1.2; min-width: 90px; }
 .gasto-col.pago { flex: 0.5; min-width: 50px; text-align: center;}
 .gasto-col.data { flex: 1.2; min-width: 100px; }
-.gasto-col.payment { flex: 1.2; min-width: 90px; } /* Nossa coluna nova! */
-.gasto-col.obs { flex: 2; min-width: 120px; color: #666; }
+.gasto-col.payment { flex: 1.2; min-width: 90px; } 
+.gasto-col.obs { flex: 2; min-width: 120px; color: var(--text-muted); }
 .gasto-col.actions { 
     flex: 1.5; 
-    min-width: 140px; /* Damos um pouco mais de espaço para não amassar */
+    min-width: 140px; 
     display: flex; 
-    justify-content: flex-end; /* Mantém alinhado à direita */
-    align-items: center; /* Alinha os botões no meio, bonitinhos */
-    gap: 8px; /* Força o espaço entre o botão Editar e Apagar */
-    padding-right: 15px; /* Empurra os botões um pouco para a esquerda */
+    justify-content: flex-end; 
+    align-items: center; 
+    gap: 8px; 
+    padding-right: 15px; 
 }
 .gasto-row input[type="text"],
 .gasto-row input[type="number"],
@@ -217,12 +310,12 @@ button:disabled {
     width: 100%;
     padding: 6px;
     font-size: 1em;
-    border: 1px solid #007bff;
+    border: 1px solid var(--btn-edit);
     border-radius: 4px;
 }
 .gasto-edit-category-row {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: var(--bg-edit-row);
+    border: 1px solid var(--border-main);
     border-radius: 6px;
     padding: 10px;
     margin-top: 10px;
@@ -252,10 +345,10 @@ button:disabled {
   font-size: 0.8em;
   padding: 5px 10px;
   font-weight: 500;
-  background-color: #c82333;
+  background-color: var(--btn-delete);
 }
-.btn-edit { background-color: #007bff; }
-.btn-delete { background-color: #dc3545; }
+.btn-edit { background-color: var(--btn-edit); }
+.btn-delete { background-color: var(--btn-delete); }
 
 @media (max-width: 768px) {
   .add-form {
@@ -281,4 +374,16 @@ button:disabled {
     margin-top: 10px;
   }
   .topbar h1 { font-size: 1.5em; }
+}
+
+.card-saldo {
+  background-color: var(--bg-card-saldo) !important;
+  border: 1px solid var(--border-card-saldo) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.card-fatura {
+  background-color: var(--bg-card-fatura) !important;
+  border: 1px solid var(--border-card-fatura) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }

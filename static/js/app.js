@@ -2,7 +2,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = window.APP_FILE || null;
     let isDirty = false;
 
-    // --- LÓGICA DE SALÁRIO E SALDO (NOVO) ---
+    // --- DARK MODE TOGGLE LÓGICA (INJETADO AUTOMATICAMENTE) ---
+    const topbar = document.querySelector('.topbar');
+    if (topbar) {
+        topbar.style.position = 'relative'; // Garante que o absolute do botão funcione
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'theme-toggle';
+        toggleBtn.style.cssText = 'position: absolute; right: 30px; top: 15px; background: transparent; border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; font-size: 0.9em; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;';
+        
+        // Verifica preferência salva
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateBtnText(savedTheme);
+
+        toggleBtn.addEventListener('mouseover', () => toggleBtn.style.backgroundColor = 'rgba(255,255,255,0.1)');
+        toggleBtn.addEventListener('mouseout', () => toggleBtn.style.backgroundColor = 'transparent');
+
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', targetTheme);
+            localStorage.setItem('theme', targetTheme);
+            updateBtnText(targetTheme);
+        });
+
+        function updateBtnText(theme) {
+            toggleBtn.innerHTML = theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+        }
+        
+        topbar.appendChild(toggleBtn);
+    }
+    // -----------------------------------------------------------
+
+    // --- LÓGICA DE SALÁRIO E SALDO ---
     const salaryInput = document.getElementById('salary-input');
     const balanceDisplay = document.getElementById('balance-display');
     const fileId = window.APP_FILE || 'default_salary'; 
@@ -16,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Função para atualizar o saldo
     function updateBalance() {
         const balanceDisplay = document.getElementById('balance-display');
-        const creditDisplay = document.getElementById('credit-display'); // <-- Pega o novo card amarelo
+        const creditDisplay = document.getElementById('credit-display'); 
         
         if (!salaryInput || !balanceDisplay || !creditDisplay) return;
 
@@ -33,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Percorre CADA LINHA de gasto, e não apenas o valor
         document.querySelectorAll('.gasto-item').forEach(item => {
             const valorEl = item.querySelector('.gasto-col.valor');
-            const formaEl = item.querySelector('.gasto-col.payment'); // <-- Pega a coluna da forma de pagamento
+            const formaEl = item.querySelector('.gasto-col.payment'); 
             
             if (valorEl) {
                 const valorTexto = valorEl.textContent.replace('R$', '').trim();
@@ -56,9 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Calcula o Saldo (Salário menos apenas Débito/Pix/Dinheiro)
         const restante = salary - totalDebito;
         if (restante >= 0) {
-            balanceDisplay.style.color = "#005A3A"; // Verde
+            // USANDO VARIÁVEIS CSS PARA FUNCIONAR BEM NO DARK MODE!
+            balanceDisplay.style.color = "var(--msg-success)"; 
         } else {
-            balanceDisplay.style.color = "#dc3545"; // Vermelho
+            balanceDisplay.style.color = "var(--msg-error)"; 
         }
         balanceDisplay.textContent = 'R$ ' + restante.toFixed(2);
 
@@ -200,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="gasto-col valor" data-field="valor">R$ ${Number(row.valor).toFixed(2)}</div>
             <div class="gasto-col pago" data-field="pago"><input type="checkbox" class="chk-pago" ${row.pago ? 'checked' : ''}></div>
             <div class="gasto-col data" data-field="data">${row.data || ''}</div>
-            <div class="gasto-col payment" data-field="forma_pagamento">${row.forma_pagamento || 'Débito'}</div> <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
+            <div class="gasto-col payment" data-field="forma_pagamento">${row.forma_pagamento || 'Débito'}</div>
             <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
             <div class="gasto-col actions">
               <button class="btn-edit">Editar</button>
@@ -316,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const valor = item.querySelector('input[data-field="valor"]').value;
             const dateInput = item.querySelector('input[data-field="data"]').value;
             const obs = item.querySelector('input[data-field="obs"]').value;
-            const forma = item.querySelector('select[data-field="forma_pagamento"]').value; // <-- Lê a nova forma
+            const forma = item.querySelector('select[data-field="forma_pagamento"]').value; 
             
             const dateParts = dateInput.split('-');
             const displayData = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : '';
@@ -333,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.querySelector('.nome').textContent = nome;
                 item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
                 item.querySelector('.data').textContent = displayData;
-                item.querySelector('.payment').textContent = forma; // <-- Atualiza a tela
+                item.querySelector('.payment').textContent = forma; 
                 item.querySelector('.obs').textContent = obs;
                 item.dataset.editing = '0';
                 const categoryRow = item.querySelector('.gasto-edit-category-row');
@@ -351,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 {field: 'nome', value: nome}, 
                 {field: 'valor', value: valor},
                 {field: 'data', value: displayData}, 
-                {field: 'forma_pagamento', value: forma}, // <-- Manda salvar a nova forma
+                {field: 'forma_pagamento', value: forma}, 
                 {field: 'obs', value: obs}
             ];
 
@@ -373,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.querySelector('.nome').textContent = nome;
                     item.querySelector('.valor').textContent = 'R$ ' + (Number(valor).toFixed(2));
                     item.querySelector('.data').textContent = displayData;
-                    item.querySelector('.payment').textContent = forma; // <-- Atualiza a tela
+                    item.querySelector('.payment').textContent = forma; 
                     item.querySelector('.obs').textContent = obs;
                     item.dataset.editing = '0';
                     item.querySelector('.gasto-edit-category-row').remove();
@@ -392,13 +425,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const nomeCell = item.querySelector('.nome');
         const valorCell = item.querySelector('.valor');
         const dataCell = item.querySelector('.data');
-        const formaCell = item.querySelector('.payment'); // <-- Pega a célula do pagamento
+        const formaCell = item.querySelector('.payment'); 
         const obsCell = item.querySelector('.obs');
         
         const nomeVal = nomeCell.textContent.trim();
         const valorVal = valorCell.textContent.replace(/[R$\s]/g, '').replace(',', '.').trim();
         const dataVal = dataCell.textContent.trim();
-        const formaVal = formaCell ? formaCell.textContent.trim() : 'Débito'; // <-- Pega o valor atual
+        const formaVal = formaCell ? formaCell.textContent.trim() : 'Débito'; 
         const obsVal = obsCell.textContent.trim();
         
         const dateParts = dataVal.split('/');
