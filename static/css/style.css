@@ -242,7 +242,10 @@ button:disabled {
   opacity: 0.7;
 }
 
-#btn-add { background-color: var(--btn-success); }
+#btn-add,
+#btn-add-income {
+  background-color: var(--btn-success);
+}
 #btn-save {
   width: 100%;
   background-color: var(--btn-primary);

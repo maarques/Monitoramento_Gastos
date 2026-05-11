@@ -34,77 +34,164 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // -----------------------------------------------------------
 
-    // --- LÓGICA DE SALÁRIO E SALDO ---
-    const salaryInput = document.getElementById('salary-input');
-    const balanceDisplay = document.getElementById('balance-display');
-    const fileId = window.APP_FILE || 'default_salary'; 
+    // --- LÓGICA DE RECEITAS E SALDO ---
+const incomeNameInput = document.getElementById('income-name');
+const incomeValueInput = document.getElementById('income-value');
+const addIncomeButton = document.getElementById('btn-add-income');
+const incomeList = document.getElementById('income-list');
+const balanceDisplay = document.getElementById('balance-display');
+const fileId = window.APP_FILE || 'default_file';
 
-    // 1. Carregar salário salvo
-    const savedSalary = localStorage.getItem('salary_' + fileId);
-    if (savedSalary && salaryInput) {
-        salaryInput.value = savedSalary;
+const incomeStorageKey = 'incomes_' + fileId;
+let incomes = [];
+
+// Carrega receitas salvas.
+// Compatibilidade: se existir salário antigo salvo, migra para uma receita chamada "Salário".
+const savedIncomes = localStorage.getItem(incomeStorageKey);
+const oldSavedSalary = localStorage.getItem('salary_' + fileId);
+
+if (savedIncomes) {
+    try {
+        incomes = JSON.parse(savedIncomes) || [];
+    } catch {
+        incomes = [];
+    }
+} else if (oldSavedSalary) {
+    const salaryValue = parseFloat(oldSavedSalary) || 0;
+    if (salaryValue > 0) {
+        incomes = [{ id: Date.now(), nome: 'Salário', valor: salaryValue }];
+        localStorage.setItem(incomeStorageKey, JSON.stringify(incomes));
+    }
+}
+
+function saveIncomes() {
+    localStorage.setItem(incomeStorageKey, JSON.stringify(incomes));
+}
+
+function renderIncomes() {
+    if (!incomeList) return;
+
+    incomeList.innerHTML = '';
+
+    if (incomes.length === 0) {
+        incomeList.innerHTML = '<p style="color: #666; margin: 0;">Nenhuma receita adicionada.</p>';
+        return;
     }
 
-    // 2. Função para atualizar o saldo
-    function updateBalance() {
-        const balanceDisplay = document.getElementById('balance-display');
-        const creditDisplay = document.getElementById('credit-display'); 
-        
-        if (!salaryInput || !balanceDisplay || !creditDisplay) return;
+    incomes.forEach(income => {
+        const item = document.createElement('div');
+        item.className = 'income-item';
+        item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid var(--border-item);';
 
-        // Pega o salário (se vazio, assume 0)
-        const salary = parseFloat(salaryInput.value) || 0;
-        
-        // Salva
-        localStorage.setItem('salary_' + fileId, salary);
+        item.innerHTML = `
+            <div style="flex: 1;">
+                <strong>${income.nome}</strong>
+            </div>
+            <div style="min-width: 120px; text-align: right;">
+                R$ ${Number(income.valor).toFixed(2)}
+            </div>
+            <button type="button" class="btn-delete-income" data-id="${income.id}" style="background-color: var(--btn-delete);">
+                Apagar
+            </button>
+        `;
 
-        // Zera os contadores separados
-        let totalDebito = 0;
-        let totalCredito = 0;
+        incomeList.appendChild(item);
+    });
+}
 
-        // Percorre CADA LINHA de gasto, e não apenas o valor
-        document.querySelectorAll('.gasto-item').forEach(item => {
-            const valorEl = item.querySelector('.gasto-col.valor');
-            const formaEl = item.querySelector('.gasto-col.payment'); 
-            
-            if (valorEl) {
-                const valorTexto = valorEl.textContent.replace('R$', '').trim();
-                const valor = parseFloat(valorTexto);
-                
-                if (!isNaN(valor)) {
-                    // Se a coluna de pagamento existir, pega o texto. Se não, assume Débito.
-                    const forma = formaEl ? formaEl.textContent.trim() : 'Débito';
-                    
-                    // Separa a soma dependendo do texto!
-                    if (forma === 'Crédito') {
-                        totalCredito += valor;
-                    } else {
-                        totalDebito += valor;
-                    }
-                }
-            }
+function getTotalIncome() {
+    return incomes.reduce((total, income) => total + (parseFloat(income.valor) || 0), 0);
+}
+
+if (addIncomeButton) {
+    addIncomeButton.addEventListener('click', () => {
+        const nome = incomeNameInput?.value.trim();
+        const valor = parseFloat(incomeValueInput?.value || 0);
+
+        if (!nome) {
+            alert('Digite a descrição da receita.');
+            return;
+        }
+
+        if (!valor || valor <= 0) {
+            alert('Digite um valor válido para a receita.');
+            return;
+        }
+
+        incomes.push({
+            id: Date.now(),
+            nome,
+            valor
         });
 
-        // 1. Calcula o Saldo (Salário menos apenas Débito/Pix/Dinheiro)
-        const restante = salary - totalDebito;
-        if (restante >= 0) {
-            // USANDO VARIÁVEIS CSS PARA FUNCIONAR BEM NO DARK MODE!
-            balanceDisplay.style.color = "var(--msg-success)"; 
-        } else {
-            balanceDisplay.style.color = "var(--msg-error)"; 
-        }
-        balanceDisplay.textContent = 'R$ ' + restante.toFixed(2);
+        saveIncomes();
+        renderIncomes();
+        updateBalance();
 
-        // 2. Mostra o valor da Fatura (Apenas Crédito)
-        creditDisplay.textContent = 'R$ ' + totalCredito.toFixed(2);
-    }
+        incomeNameInput.value = '';
+        incomeValueInput.value = '';
+    });
+}
 
-    if (salaryInput) {
-        salaryInput.addEventListener('input', updateBalance);
-    }
-    // Executa inicial
+incomeList?.addEventListener('click', (e) => {
+    const btnDeleteIncome = e.target.closest('.btn-delete-income');
+    if (!btnDeleteIncome) return;
+
+    const id = Number(btnDeleteIncome.dataset.id);
+    incomes = incomes.filter(income => income.id !== id);
+
+    saveIncomes();
+    renderIncomes();
     updateBalance();
-    // ----------------------------------------
+});
+
+// Função para atualizar o saldo
+function updateBalance() {
+    const balanceDisplay = document.getElementById('balance-display');
+    const creditDisplay = document.getElementById('credit-display'); 
+    
+    if (!balanceDisplay || !creditDisplay) return;
+
+    const totalReceitas = getTotalIncome();
+
+    let totalDebito = 0;
+    let totalCredito = 0;
+
+    document.querySelectorAll('.gasto-item').forEach(item => {
+        const valorEl = item.querySelector('.gasto-col.valor');
+        const formaEl = item.querySelector('.gasto-col.payment'); 
+        
+        if (valorEl) {
+            const valorTexto = valorEl.textContent.replace('R$', '').trim();
+            const valor = parseFloat(valorTexto);
+            
+            if (!isNaN(valor)) {
+                const forma = formaEl ? formaEl.textContent.trim() : 'Débito';
+                
+                if (forma === 'Crédito') {
+                    totalCredito += valor;
+                } else {
+                    totalDebito += valor;
+                }
+            }
+        }
+    });
+
+    const restante = totalReceitas - totalDebito;
+
+    if (restante >= 0) {
+        balanceDisplay.style.color = "var(--msg-success)"; 
+    } else {
+        balanceDisplay.style.color = "var(--msg-error)"; 
+    }
+
+    balanceDisplay.textContent = 'R$ ' + restante.toFixed(2);
+    creditDisplay.textContent = 'R$ ' + totalCredito.toFixed(2);
+}
+
+renderIncomes();
+updateBalance();
+// ----------------------------------------
 
     window.addEventListener('beforeunload', (event) => {
         if (isDirty) {

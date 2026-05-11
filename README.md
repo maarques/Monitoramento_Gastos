@@ -21,7 +21,7 @@ Uma ferramenta web simples e intuitiva para visualizar e gerenciar seus gastos a
 * **Criação do Zero:** Comece uma nova planilha de controle financeiro diretamente na aplicação.
 * **Upload de Planilhas:** Carregue seus arquivos `.xlsx` existentes para visualização e edição.
 * **Gerenciamento de Lançamentos:** Adicione, edite e apague gastos de forma fácil e rápida.
-* **Controle de Saldo e Fatura:** Diferencie a forma de pagamento de cada gasto. O sistema calcula automaticamente o seu **Saldo em Conta** real (descontando Débito, Pix e Dinheiro do seu salário) e acumula separadamente a **Fatura do Cartão** (gastos no Crédito).
+* **Controle de Receitas, Saldo e Fatura:** Cadastre múltiplas receitas, como salário, renda extra, freelance e outras entradas. O sistema calcula automaticamente o seu **Saldo em Conta** real, descontando gastos em Débito, Pix e Dinheiro do total de receitas, e acumula separadamente a **Fatura do Cartão** com os gastos no Crédito.
 * **Sistema de Categorias:** As abas da sua planilha são transformadas em categorias, permitindo organizar seus gastos.
 * **Edição Completa:** Altere qualquer informação de um lançamento, incluindo a forma de pagamento e mover um gasto entre categorias.
 * **Feedback em Tempo Real:** A interface responde às suas ações, com mensagens de salvamento e avisos para não perder alterações.
