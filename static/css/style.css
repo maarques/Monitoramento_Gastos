@@ -29,11 +29,16 @@
   --msg-success: #28a745;
   --msg-error: #dc3545;
 
+  --bg-card-receita: rgba(37, 99, 235, 0.08);
+  --border-card-receita: rgba(37, 99, 235, 0.24);
+  --text-card-receita: #1d4ed8;
+
   --bg-card-saldo: #e8f5e9;
   --border-card-saldo: #c8e6c9;
-  
-  --bg-card-fatura: #fff8e1;
-  --border-card-fatura: #ffecb3;
+
+  --bg-card-fatura: rgba(220, 38, 38, 0.08);
+  --border-card-fatura: rgba(220, 38, 38, 0.24);
+  --text-card-fatura: #b91c1c;
 }
 
 [data-theme="dark"] {
@@ -75,11 +80,16 @@
   --msg-success: #34d399;
   --msg-error: #f87171;
 
+  --bg-card-receita: rgba(59, 130, 246, 0.08);
+  --border-card-receita: rgba(59, 130, 246, 0.22);
+  --text-card-receita: #93c5fd;
+
   --bg-card-saldo: rgba(16, 185, 129, 0.05);
   --border-card-saldo: rgba(16, 185, 129, 0.2);
-  
-  --bg-card-fatura: rgba(245, 158, 11, 0.05);
-  --border-card-fatura: rgba(245, 158, 11, 0.2);
+
+  --bg-card-fatura: rgba(248, 113, 113, 0.08);
+  --border-card-fatura: rgba(248, 113, 113, 0.22);
+  --text-card-fatura: #fca5a5;
 }
 
 /* ESTILOS GERAIS*/
@@ -379,14 +389,72 @@ button:disabled {
   .topbar h1 { font-size: 1.5em; }
 }
 
+
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 25px;
+}
+
+.summary-card {
+  text-align: center;
+  border-radius: 10px;
+  padding: 24px 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+}
+
+.summary-card h3 {
+  margin: 0;
+  font-size: 1.05em;
+}
+
+.summary-card h1 {
+  font-size: 2.15em;
+  margin: 12px 0 8px;
+}
+
+.summary-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95em;
+}
+
+.card-receita {
+  background-color: var(--bg-card-receita) !important;
+  border: 1px solid var(--border-card-receita) !important;
+}
+
+.card-receita h1 {
+  color: var(--text-card-receita);
+}
+
 .card-saldo {
   background-color: var(--bg-card-saldo) !important;
   border: 1px solid var(--border-card-saldo) !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .card-fatura {
   background-color: var(--bg-card-fatura) !important;
   border: 1px solid var(--border-card-fatura) !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.card-fatura h1 {
+  color: var(--text-card-fatura);
+}
+
+@media (max-width: 900px) {
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card h1 {
+    font-size: 2em;
+  }
 }

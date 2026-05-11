@@ -40,7 +40,8 @@ const incomeValueInput = document.getElementById('income-value');
 const addIncomeButton = document.getElementById('btn-add-income');
 const incomeList = document.getElementById('income-list');
 const balanceDisplay = document.getElementById('balance-display');
-const fileId = window.APP_FILE || 'default_file';
+const TEMP_FILE_ID = 'nova_planilha';
+const fileId = window.APP_FILE || TEMP_FILE_ID;
 
 const incomeStorageKey = 'incomes_' + fileId;
 let incomes = [];
@@ -147,10 +148,11 @@ incomeList?.addEventListener('click', (e) => {
 
 // Função para atualizar o saldo
 function updateBalance() {
+    const incomeTotalDisplay = document.getElementById('income-total-display');
     const balanceDisplay = document.getElementById('balance-display');
     const creditDisplay = document.getElementById('credit-display'); 
-    
-    if (!balanceDisplay || !creditDisplay) return;
+
+    if (!incomeTotalDisplay || !balanceDisplay || !creditDisplay) return;
 
     const totalReceitas = getTotalIncome();
 
@@ -177,6 +179,8 @@ function updateBalance() {
         }
     });
 
+    incomeTotalDisplay.textContent = 'R$ ' + totalReceitas.toFixed(2);
+    
     const restante = totalReceitas - totalDebito;
 
     if (restante >= 0) {
@@ -586,19 +590,29 @@ updateBalance();
         msg.textContent = 'Salvando planilha...';
         msg.className = 'saving';
 
-        fetch('/api/save', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ source_file, target_file })
-        }).then(r => r.json()).then(res => {
-            if (res.ok) {
-                isDirty = false;
-                msg.textContent = 'Planilha salva com sucesso!';
-                msg.className = 'success';
+    fetch('/api/save', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ source_file, target_file })
+    }).then(r => r.json()).then(res => {
+    if (res.ok) {
+        // Garante que as receitas criadas antes de salvar a planilha
+        // fiquem vinculadas ao nome definitivo do arquivo.
+        const targetIncomeStorageKey = 'incomes_' + target_file;
+        localStorage.setItem(targetIncomeStorageKey, JSON.stringify(incomes));
 
-                setTimeout(() => {
-                    window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
-                }, 1500);
+        // Se era uma planilha nova, limpa a chave temporária.
+        if (!source_file) {
+            localStorage.removeItem('incomes_' + TEMP_FILE_ID);
+        }
+
+        isDirty = false;
+        msg.textContent = 'Planilha salva com sucesso!';
+        msg.className = 'success';
+
+        setTimeout(() => {
+            window.location.href = `/dashboard?file=${encodeURIComponent(target_file)}`;
+        }, 1500);
                 
             } else {
                 msg.textContent = 'Erro ao salvar a planilha.';
