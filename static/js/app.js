@@ -146,6 +146,43 @@ incomeList?.addEventListener('click', (e) => {
     updateBalance();
 });
 
+function parseMoneyValue(text) {
+    if (!text) return 0;
+
+    const normalized = text
+        .replace('R$', '')
+        .replace(/\s/g, '')
+        .replace(',', '.')
+        .trim();
+
+    const value = parseFloat(normalized);
+    return isNaN(value) ? 0 : value;
+}
+
+function updateCategoryTotals() {
+    document.querySelectorAll('.cat-container').forEach(catContainer => {
+        let total = 0;
+
+        catContainer.querySelectorAll('.gasto-item').forEach(item => {
+            const valorEl = item.querySelector('.gasto-col.valor');
+            total += parseMoneyValue(valorEl?.textContent);
+        });
+
+        let totalEl = catContainer.querySelector('.category-total');
+
+        if (!totalEl) {
+            totalEl = document.createElement('div');
+            totalEl.className = 'category-total';
+            catContainer.appendChild(totalEl);
+        }
+
+        totalEl.innerHTML = `
+            <span>Total da categoria</span>
+            <strong>R$ ${total.toFixed(2)}</strong>
+        `;
+    });
+}
+
 // Função para atualizar o saldo
 function updateBalance() {
     const incomeTotalDisplay = document.getElementById('income-total-display');
@@ -191,6 +228,8 @@ function updateBalance() {
 
     balanceDisplay.textContent = 'R$ ' + restante.toFixed(2);
     creditDisplay.textContent = 'R$ ' + totalCredito.toFixed(2);
+
+    updateCategoryTotals();
 }
 
 renderIncomes();
@@ -333,6 +372,7 @@ updateBalance();
           </div>
         `;
         catContainer.appendChild(item);
+        updateCategoryTotals();
     }
 
     document.getElementById('gastos-list')?.addEventListener('click', (e) => {
