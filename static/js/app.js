@@ -173,13 +173,15 @@ function updateCategoryTotals() {
         if (!totalEl) {
             totalEl = document.createElement('div');
             totalEl.className = 'category-total';
-            catContainer.appendChild(totalEl);
         }
 
         totalEl.innerHTML = `
             <span>Total da categoria</span>
             <strong>R$ ${total.toFixed(2)}</strong>
         `;
+
+        // Garante que o total fique sempre no final da categoria
+        catContainer.appendChild(totalEl);
     });
 }
 
@@ -371,7 +373,14 @@ updateBalance();
             </div>
           </div>
         `;
-        catContainer.appendChild(item);
+        const categoryTotal = catContainer.querySelector('.category-total');
+
+        if (categoryTotal) {
+    catContainer.insertBefore(item, categoryTotal);
+        } else {
+           catContainer.appendChild(item);
+        }
+
         updateCategoryTotals();
     }
 
