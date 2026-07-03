@@ -261,6 +261,10 @@ button:disabled {
   background-color: var(--btn-primary);
 }
 .save-section { text-align: center; }
+.download-action {
+  margin-top: 12px;
+  background-color: var(--btn-edit);
+}
 
 #save-msg {
   display: block;

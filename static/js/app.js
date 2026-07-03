@@ -2,6 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = window.APP_FILE || null;
     let isDirty = false;
 
+    function escapeHTML(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // --- DARK MODE TOGGLE LÓGICA (INJETADO AUTOMATICAMENTE) ---
     const topbar = document.querySelector('.topbar');
     if (topbar) {
@@ -40,34 +49,7 @@ const incomeValueInput = document.getElementById('income-value');
 const addIncomeButton = document.getElementById('btn-add-income');
 const incomeList = document.getElementById('income-list');
 const balanceDisplay = document.getElementById('balance-display');
-const TEMP_FILE_ID = 'nova_planilha';
-const fileId = window.APP_FILE || TEMP_FILE_ID;
-
-const incomeStorageKey = 'incomes_' + fileId;
-let incomes = [];
-
-// Carrega receitas salvas.
-// Compatibilidade: se existir salário antigo salvo, migra para uma receita chamada "Salário".
-const savedIncomes = localStorage.getItem(incomeStorageKey);
-const oldSavedSalary = localStorage.getItem('salary_' + fileId);
-
-if (savedIncomes) {
-    try {
-        incomes = JSON.parse(savedIncomes) || [];
-    } catch {
-        incomes = [];
-    }
-} else if (oldSavedSalary) {
-    const salaryValue = parseFloat(oldSavedSalary) || 0;
-    if (salaryValue > 0) {
-        incomes = [{ id: Date.now(), nome: 'Salário', valor: salaryValue }];
-        localStorage.setItem(incomeStorageKey, JSON.stringify(incomes));
-    }
-}
-
-function saveIncomes() {
-    localStorage.setItem(incomeStorageKey, JSON.stringify(incomes));
-}
+let incomes = Array.isArray(window.APP_INCOMES) ? window.APP_INCOMES : [];
 
 function renderIncomes() {
     if (!incomeList) return;
@@ -84,18 +66,27 @@ function renderIncomes() {
         item.className = 'income-item';
         item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid var(--border-item);';
 
-        item.innerHTML = `
-            <div style="flex: 1;">
-                <strong>${income.nome}</strong>
-            </div>
-            <div style="min-width: 120px; text-align: right;">
-                R$ ${Number(income.valor).toFixed(2)}
-            </div>
-            <button type="button" class="btn-delete-income" data-id="${income.id}" style="background-color: var(--btn-delete);">
-                Apagar
-            </button>
-        `;
+        const nameWrapper = document.createElement('div');
+        nameWrapper.style.flex = '1';
+        const name = document.createElement('strong');
+        name.textContent = income.nome;
+        nameWrapper.appendChild(name);
 
+        const value = document.createElement('div');
+        value.style.minWidth = '120px';
+        value.style.textAlign = 'right';
+        value.textContent = `R$ ${Number(income.valor).toFixed(2)}`;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'btn-delete-income';
+        deleteButton.dataset.id = income.id;
+        deleteButton.style.backgroundColor = 'var(--btn-delete)';
+        deleteButton.textContent = 'Apagar';
+
+        item.appendChild(nameWrapper);
+        item.appendChild(value);
+        item.appendChild(deleteButton);
         incomeList.appendChild(item);
     });
 }
@@ -120,12 +111,12 @@ if (addIncomeButton) {
         }
 
         incomes.push({
-            id: Date.now(),
+            id: String(Date.now()),
             nome,
             valor
         });
 
-        saveIncomes();
+        isDirty = true;
         renderIncomes();
         updateBalance();
 
@@ -138,10 +129,10 @@ incomeList?.addEventListener('click', (e) => {
     const btnDeleteIncome = e.target.closest('.btn-delete-income');
     if (!btnDeleteIncome) return;
 
-    const id = Number(btnDeleteIncome.dataset.id);
-    incomes = incomes.filter(income => income.id !== id);
+    const id = btnDeleteIncome.dataset.id;
+    incomes = incomes.filter(income => String(income.id) !== String(id));
 
-    saveIncomes();
+    isDirty = true;
     renderIncomes();
     updateBalance();
 });
@@ -335,7 +326,7 @@ updateBalance();
         if (!catContainer) {
             const title = document.createElement('h4');
             title.className = 'cat-title';
-            title.innerHTML = `${category} <button class="btn-delete-category" data-category="${category}">Excluir Categoria</button>`;
+            title.innerHTML = `${escapeHTML(category)} <button class="btn-delete-category" data-category="${escapeHTML(category)}">Excluir Categoria</button>`;
             const container = document.createElement('div');
             container.className = 'cat-container';
             container.dataset.category = category;
@@ -361,12 +352,12 @@ updateBalance();
         item.dataset.id = row.id;
         item.innerHTML = `
           <div class="gasto-row">
-            <div class="gasto-col nome" data-field="nome">${row.nome}</div>
+            <div class="gasto-col nome" data-field="nome">${escapeHTML(row.nome)}</div>
             <div class="gasto-col valor" data-field="valor">R$ ${Number(row.valor).toFixed(2)}</div>
             <div class="gasto-col pago" data-field="pago"><input type="checkbox" class="chk-pago" ${row.pago ? 'checked' : ''}></div>
-            <div class="gasto-col data" data-field="data">${row.data || ''}</div>
-            <div class="gasto-col payment" data-field="forma_pagamento">${row.forma_pagamento || 'Débito'}</div>
-            <div class="gasto-col obs" data-field="obs">${row.obs || ''}</div>
+            <div class="gasto-col data" data-field="data">${escapeHTML(row.data || '')}</div>
+            <div class="gasto-col payment" data-field="forma_pagamento">${escapeHTML(row.forma_pagamento || 'Débito')}</div>
+            <div class="gasto-col obs" data-field="obs">${escapeHTML(row.obs || '')}</div>
             <div class="gasto-col actions">
               <button class="btn-edit">Editar</button>
               <button class="btn-delete">Apagar</button>
@@ -578,10 +569,10 @@ updateBalance();
         const isoDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : '';
 
         // Transforma tudo em campos de input
-        nomeCell.innerHTML = `<input type="text" data-field="nome" value="${nomeVal}">`;
-        valorCell.innerHTML = `<input type="number" data-field="valor" value="${valorVal}">`;
-        dataCell.innerHTML = `<input type="date" data-field="data" value="${isoDate}">`;
-        obsCell.innerHTML = `<input type="text" data-field="obs" value="${obsVal}">`;
+        nomeCell.innerHTML = `<input type="text" data-field="nome" value="${escapeHTML(nomeVal)}">`;
+        valorCell.innerHTML = `<input type="number" data-field="valor" value="${escapeHTML(valorVal)}">`;
+        dataCell.innerHTML = `<input type="date" data-field="data" value="${escapeHTML(isoDate)}">`;
+        obsCell.innerHTML = `<input type="text" data-field="obs" value="${escapeHTML(obsVal)}">`;
         
         // Transforma a forma de pagamento em um dropdown (select) selecionando o atual
         formaCell.innerHTML = `
@@ -597,7 +588,7 @@ updateBalance();
         if (allCategories.length > 0) {
             let categorySelectHTML = `<select data-field="category">`;
             allCategories.forEach(c => {
-                categorySelectHTML += `<option value="${c}" ${c === originalCategory ? 'selected' : ''}>${c}</option>`;
+                categorySelectHTML += `<option value="${escapeHTML(c)}" ${c === originalCategory ? 'selected' : ''}>${escapeHTML(c)}</option>`;
             });
             categorySelectHTML += `</select>`;
             
@@ -642,19 +633,9 @@ updateBalance();
     fetch('/api/save', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ source_file, target_file })
+    body: JSON.stringify({ source_file, target_file, incomes })
     }).then(r => r.json()).then(res => {
     if (res.ok) {
-        // Garante que as receitas criadas antes de salvar a planilha
-        // fiquem vinculadas ao nome definitivo do arquivo.
-        const targetIncomeStorageKey = 'incomes_' + target_file;
-        localStorage.setItem(targetIncomeStorageKey, JSON.stringify(incomes));
-
-        // Se era uma planilha nova, limpa a chave temporária.
-        if (!source_file) {
-            localStorage.removeItem('incomes_' + TEMP_FILE_ID);
-        }
-
         isDirty = false;
         msg.textContent = 'Planilha salva com sucesso!';
         msg.className = 'success';

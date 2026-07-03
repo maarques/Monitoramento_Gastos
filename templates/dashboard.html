@@ -144,6 +144,9 @@
 
   <section class="box save-section">
     <button id="btn-save">Salvar Alterações na Planilha</button>
+    {% if file %}
+      <a class="button-action download-action" href="{{ url_for('main.download_file', file=file) }}">Baixar Planilha</a>
+    {% endif %}
     <span id="save-msg"></span>
   </section>
 

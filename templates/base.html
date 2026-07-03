@@ -17,6 +17,8 @@
   </main>
   <script>
     window.APP_FILE = "{{ file or '' }}";
+    window.APP_INCOMES = {{ incomes | default([]) | tojson }};
+    window.APP_SUMMARY = {{ summary | default({}) | tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
